@@ -1,0 +1,28 @@
+@startuml
+title DFDレベル2（P4_FB入力処理）
+
+left to right direction
+
+actor ユーザー
+database "データストア" as DB
+
+rectangle P4 as "P4_FB入力処理" {
+
+  rectangle P4_1 as "P4-1_FB入力受付"
+  rectangle P4_2 as "P4-2_FB完了判定"
+  rectangle P4_3 as "P4-3_FB結果保存"
+
+}
+
+' ===== ユーザー入力 =====
+ユーザー --> P4_1 : FB選択内容\n調整時間入力(必要時)
+
+' ===== プロセス間連携 =====
+P4_1 --> P4_2 : FB入力内容
+P4_2 --> P4_3 : FB入力内容
+
+' ===== データストア =====
+P4_3 --> DB : DD_2:FB完了フラグ更新\nDD_3:FB履歴保存
+
+
+@enduml

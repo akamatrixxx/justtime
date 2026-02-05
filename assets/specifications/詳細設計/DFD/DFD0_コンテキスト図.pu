@@ -1,0 +1,23 @@
+@startuml 
+title コンテキスト図（お疲れ様アプリ） 
+left to right direction 
+'skinparam linetype ortho 
+
+actor ユーザー 
+rectangle "お疲れ様アプリ" as App { 
+ } 
+rectangle "モバイルOS\n(通知・時刻)" as OS 
+database "データストア" as DB 
+' --- ユーザー --- 
+ユーザー --> App : 終業時間帯\n就寝時間帯\nFB\n通知許可・不許可選択 
+' App --> ユーザー : メッセージ表示\nFB画面表示 
+
+' --- OS --- 
+OS --> App : 現在時刻 
+App --> OS : 通知スケジュール登録 
+' OS --> ユーザー : 通知表示 
+' --- データストア --- 
+App --> DB : 終業時間帯\n就寝時間帯\nFB履歴\n通知時刻 
+DB --> App :終業時間帯\n就寝時間帯\nFB履歴\n通知時刻  
+
+@enduml

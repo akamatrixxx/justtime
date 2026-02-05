@@ -1,0 +1,41 @@
+@startuml
+title システム構成図（実行環境）
+
+node "スマートフォン端末" {
+
+  node "Flutter/Dartアプリ" {
+    component "UI層"
+    component "ロジック層"
+    note right
+    ・将来的にpythonモジュール化を検討 
+    （AIを使った通知時間最適化など）
+    end note
+    component "通知管理層"
+    component "データ管理層"
+  }
+
+  node "OS通知機構" {
+    component "通知スケジューラ"
+    component "通知送信"
+  }
+
+  node "ローカルデータストア" {
+    component "ユーザ設定"
+    component "FB履歴"
+  }
+}
+
+node "データストアサーバー" {
+  
+}
+
+"UI層" -> "ロジック層"
+"ロジック層" --> "データ管理層"
+"ロジック層"--> "通知管理層"
+"通知管理層" --> "OS通知機構"
+"データ管理層" --> "ローカルデータストア"
+
+
+データ管理層 ..> "データストアサーバー" : 将来拡張
+
+@enduml

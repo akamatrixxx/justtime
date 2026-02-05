@@ -1,0 +1,58 @@
+@startuml
+title 日付変更時 処理シーケンス（P2中心）
+
+participant "AppStartService\n(P2)" as P2
+participant "NotificationTimeService\n(P5)" as P5
+participant "NotificationService\n(P6)" as P6
+participant "Repository\n(SQLite)" as DB
+participant "OS\n(時刻)" as OS_Time
+participant "OS\n(通知)" as OS_Notify
+
+== 未利用日判定 ==
+  P2 -> P2 : 未利用日判定(最終利用日 + 1日 < 現在日付?)
+
+  alt 未利用日あり（1日以上）
+    P2 -> P2 : 処理対象日 = 最終利用日 + 1日
+
+    loop 処理対象日 < 現在日付
+      P2 -> DB : 処理対象日を未完了で確定
+      note right
+      ・FB完了=false
+      end note
+
+      P2 -> DB : 分析用FB履歴保存
+      note right
+      ・FB種別=未入力
+      ・通知時刻=NULL
+      end note
+    
+      P2 -> DB : 最終利用日＝処理対象日
+
+      P2 -> P2 : 処理対象日を1日進める
+    end
+
+    == 通知時刻算出 ==
+    P2 -> P5 : calcNotificationTime()
+    note right
+    ・通知時刻算出シーケンスへ
+    end note
+
+
+    ' == 通知登録 ==
+    ' P2 -> P6 : scheduleNotification()
+    ' P6 -> OS_Notify : 通知登録
+
+        == 当日初期化 ==
+    P2 -> DB : 当日状態初期化
+    note right
+    ・FB完了=false
+    end note
+end 
+
+
+
+'   == 最終利用日更新 ==
+'   P2 -> DB : 最終利用日 = 現在日付
+
+
+@enduml

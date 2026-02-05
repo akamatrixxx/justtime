@@ -1,0 +1,68 @@
+@startuml
+title DFDレベル1（お疲れ様アプリ・初回起動考慮版）
+left to right direction
+
+actor ユーザー
+node "モバイルOS\n(通知・時刻)" as OS
+database "データストア" as DB
+
+note right
+[マスターデータ]
+・MD_1:初回起動フラグ
+・MD_2:終業時間帯
+・MD_3:就寝時間帯
+・MD_4:最終利用日
+[日別データ]
+・DD_1:通知時刻
+・DD_2:FB完了フラグ
+・DD_3:FB履歴
+end note
+
+database "状態" as State
+note right
+・S1:通知前状態
+・S2:通知後状態
+・S3:FB完了状態
+end note
+
+' ===== プロセス =====
+rectangle P1 as "P1_初回起動／設定処理"
+rectangle P2 as "P2_アプリ起動時判定処理"
+rectangle P3 as "P3_状態判定処理"
+rectangle P4 as "P4_FB入力処理"
+rectangle P5 as "P5_通知時刻算出処理"
+rectangle P6 as "P6_通知管理処理"
+
+
+' ===== ユーザーとの入出力 =====
+ユーザー --> P1 : 終業時間帯\n就寝時間帯\n通知許可・不許可選択
+' P1 ..> ユーザー : UI_01/UI_02:チュートリアル表示
+
+ユーザー --> P4 : FB入力
+' P3 ..> ユーザー : UI_07:状態別メッセージ表示
+' P4 ..> ユーザー : UI_03/UI_04/UI_05:FB画面表示/UI_06:FB完了後メッセージ表示
+
+' ===== OSとの入出力 =====
+P1 --> OS : 通知許可リクエスト
+OS --> P2 : 現在時刻
+P6 --> OS : 通知スケジュール
+
+
+' ===== データストア =====
+P1 --> DB : MD_1:初回起動フラグ(OFF)\nMD_2:終業時間帯\nMD_3:就寝時間帯
+
+DB --> P2 : MD_1:初回起動フラグ\nMD_4:最終利用日\nDD_2:FB完了フラグ
+P2 --> DB : MD_4:最終利用日更新\nDD_2:FB完了フラグ更新\nDD_3:未利用日のFB履歴更新
+P3 <-- DB : DD_1:通知時刻\nDD_2:FB完了フラグ
+P4 --> DB : DD_2:FB完了フラグ更新\nDD_3:FB履歴保存
+
+P5 <-- DB : MD_2:終業時間帯\nMD_3:就寝時間帯\nDD_1:通知時刻\nDD_3:FB履歴
+P5 --> DB : DD_1:[翌日]通知時刻更新
+
+P3 --> State : 状態(S1/S2/S3)
+
+' ===== プロセス間連携 =====
+P2 --> P3 : 現在時刻
+P5 --> P6 : 通知時刻
+
+@enduml

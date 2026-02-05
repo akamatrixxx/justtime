@@ -1,0 +1,30 @@
+@startuml
+title DFDレベル2（P3_状態判定処理）
+
+' left to right direction
+
+database "データストア" as DB
+database "状態" as State
+
+rectangle P2 as "P2_アプリ起動時判定処理"
+
+rectangle P3 as "P3_状態判定処理\n(S1/S2/S3)" {
+' --- 下位プロセス ---
+rectangle P3_1 as "P3-1_FB完了判定"
+rectangle P3_2 as "P3-2_通知時刻判定"
+rectangle P3_3 as "P3-3_状態決定"
+
+}
+' --- 入力 ---
+DB --> P3_1 : DD_2:FB完了フラグ
+DB --> P3_2 : DD_1:通知時刻
+P2 --> P3_2 : 現在時刻
+
+' --- プロセス間 ---
+P3_1 --> P3_3 : FB完了有無
+P3_2 --> P3_3 : 通知前/後判定
+
+' --- 出力 ---
+P3_3 --> State : 状態(S1/S2/S3)
+
+@enduml

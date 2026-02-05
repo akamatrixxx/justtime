@@ -1,0 +1,68 @@
+@startuml
+title 01_アプリ起動時 処理フロー
+
+start
+
+:アプリ起動;
+
+if (初回起動フラグON?) then (Yes)
+note right
+  ・不揮発メモリ初期化
+  ・初期設定未完了状態
+end note
+  :初回起動時フローへ遷移;
+
+endif
+
+' --- 日付変更チェック ---
+:現在日付取得;
+:最終利用日取得;
+note right
+・FB未完了判断は最終利用日で判定
+end note
+
+if (現在日付 ≠ 最終利用日?) then (Yes)
+  :日付変更時フローへ遷移;
+endif
+
+' --- 通常起動フロー ---
+:当日状態データ取得;
+note right
+・通知時刻
+・FB完了フラグ
+end note
+
+if (FB完了状態 = true?) then (Yes)
+  :「今日もお疲れさまでした。」表示;
+  note right
+    状態 = S3
+  end note
+
+else (No)
+
+  if (現在時刻 < 通知時刻?) then (Yes)
+    :「まだまだ頑張りましょう！」表示;
+    note right
+      状態 = S1
+    end note
+
+  else (No)
+    :FB画面表示;
+    note right
+      状態 = S2
+    end note
+
+    if (FB送信完了?) then (Yes)
+      :FB内容を保存;
+      :FB完了状態 = true;
+      :状態 = S3;
+      : 明日の通知時刻算出＆登録;
+      :「今日もお疲れさまでした。」表示;
+      
+    endif
+  endif
+
+endif
+
+stop
+@enduml

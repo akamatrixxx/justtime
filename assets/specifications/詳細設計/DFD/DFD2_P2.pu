@@ -1,0 +1,41 @@
+@startuml
+title DFDレベル2（P2_アプリ起動時判定処理）
+
+left to right direction
+' skinparam linetype ortho 
+
+database "データストア" as DB
+node "モバイルOS\n(時刻)" as OS
+
+rectangle P2 as "P2_アプリ起動時判定処理" {
+  rectangle P2_1 as "P2-1_初回起動判定"
+  rectangle P2_2 as "P2-2_日付変更判定"
+  rectangle P2_3 as "P2-3_未完了日抽出"
+  rectangle P2_4 as "P2-4_未完了日FB生成"
+  rectangle P2_5 as "P2-5_起動後処理振り分け"
+}
+
+' ===== 入力 =====
+DB --> P2_1 : MD_1:初回起動フラグ
+
+OS --> P2_2 : 現在時刻
+DB --> P2_2 : \n\n\nMD_4:最終利用日
+
+DB --> P2_3 : DD_3:FB履歴
+
+DB --> P2_4 : DD_2:FB完了フラグ
+
+' ===== プロセス間連携 =====
+P2_1 --> P2_5 : 初回起動判定結果
+
+P2_2 --> P2_3 : 日付変更有無
+' P2_2 --> P2_5 : 日付変更有無
+
+P2_3 --> P2_4 : 未完了日リスト
+
+
+' ===== 出力 =====
+P2_2 --> DB : MD_4:最終利用日更新/DD_2:FB完了フラグ更新
+P2_4 --> DB : DD_3:未完了日FB記録
+
+@enduml

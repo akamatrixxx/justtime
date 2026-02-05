@@ -1,0 +1,65 @@
+@startuml
+title 通知時間算出シーケンス（P5：修正版フロー準拠）
+
+participant "FeedbackService\n(P4)" as P4
+participant "NotificationTimeService\n(P5)" as P5
+participant "Repository\n(SQLite)" as DB
+
+== 通知時間算出要求 ==
+P4 -> P5 : calcNotificationTime()
+
+== 当日情報取得 ==
+P5 -> DB : 当日通知時間取得
+DB --> P5 : 当日通知時間
+
+P5 -> DB : 当日FB取得
+DB --> P5 : FB有無 / FB種別 / 調整量
+
+== FB有無判定 ==
+alt FB未入力
+  P5 -> P5 : 翌日通知時間 = 当日通知時間
+
+else FB入力あり
+
+  == FB種別判定① ==
+  alt FB種別②「ありがとう」
+    P5 -> P5 : 翌日通知時間 = 当日通知時間
+
+  else その他FB
+
+    == FB種別判定② ==
+    alt FB種別①「まだまだ頑張れる」
+      P5 -> P5 : 調整方向 = ＋
+    else FB種別③「なんで今頃」
+      P5 -> P5 : 調整方向 = −
+    end
+
+    P5 -> P5 : 調整量（分）取得
+    P5 -> P5 : 仮翌日通知時間 = 当日通知時間 ± 調整量
+
+    == 終業時間帯制約 ==
+    P5 -> DB : 終業時間帯開始取得
+    DB --> P5 : 終業時間帯開始
+
+    alt 終業時間帯開始 >= 仮翌日通知時間
+      P5 -> P5 : 仮翌日通知時間 = 終業時間帯開始
+    end
+
+    == 就寝時間帯制約 ==
+    P5 -> DB : 就寝時間帯設定取得
+    DB --> P5 : 就寝時間帯(有無/開始)
+
+    alt 就寝時間帯あり
+      alt 仮翌日通知時間 >= 就寝時間帯開始
+        P5 -> P5 : 仮翌日通知時間 = 就寝時間帯開始
+      end
+    end
+
+    P5 -> P5 : 翌日通知時間 = 仮翌日通知時間
+  end
+end
+
+== 翌日通知時間確定 ==
+P5 -> DB : 翌日通知時間保存
+
+@enduml
