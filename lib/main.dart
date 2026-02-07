@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+
+import 'data/model/daily_state.dart';
+
 import 'logic/state/app_state.dart';
+import 'logic/state/state_judge_service.dart';
 import 'ui/tutorial/tutorial_page.dart';
 import 'ui/message/message_page.dart';
 import 'ui/feedback/feedback_page.dart';
@@ -41,21 +45,40 @@ class AppRoot extends StatefulWidget {
 class _AppRootState extends State<AppRoot> {
   bool tutorialCompleted = false;
 
-  // 今は強制的に S3
-  AppState appState = AppState.completed;
+  late DailyState dailyState;
+  late AppState appState;
+
+  final StateJudgeService stateJudge = StateJudgeService();
 
   @override
   void initState() {
     super.initState();
-    // 本来はここで AppStartService を呼ぶ
-    // 今回は仮で何もしない
+
+    // 今日の仮状態を作る
+    dailyState = DailyState(
+      date: DateTime.now(),
+      notifyTime: DateTime.now().add(const Duration(hours: 1)),
+      feedbackCompleted: false,
+    );
+
+    // 初回判定
+    _judgeState();
   }
 
-  // Tutorial 完了コールバック
+  /// 状態判定をまとめた関数
+  void _judgeState() {
+    appState = stateJudge.judge(now: DateTime.now(), dailyState: dailyState);
+  }
+
+  /// Tutorial 完了コールバック
   void onTutorialCompleted() {
     setState(() {
       tutorialCompleted = true;
-      appState = AppState.completed; // 強制S3
+
+      // 今回の仕様：Tutorial完了時はFB完了扱い
+      dailyState.feedbackCompleted = true;
+
+      _judgeState(); // ← 再判定
     });
   }
 
