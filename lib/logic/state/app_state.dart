@@ -1,1 +1,5 @@
-enum AppState { tutorial, messageS3 }
+enum AppState {
+  beforeNotification, // S1
+  waitingFeedback, // S2
+  completed, // S3
+}

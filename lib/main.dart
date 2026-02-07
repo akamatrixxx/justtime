@@ -1,68 +1,81 @@
 import 'package:flutter/material.dart';
-import 'logic/app_start/app_start_service.dart';
-import 'logic/state/state_judge_service.dart';
 import 'logic/state/app_state.dart';
 import 'ui/tutorial/tutorial_page.dart';
 import 'ui/message/message_page.dart';
+import 'ui/feedback/feedback_page.dart';
+
+// ===== main =====
 
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatefulWidget {
+// ===== MyApp =====
+
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'JustTime',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
+      ),
+      home: const AppRoot(),
+    );
+  }
 }
 
-class _MyAppState extends State<MyApp> {
-  final appStartService = AppStartService();
-  final stateJudgeService = StateJudgeService();
+// ===== AppRoot =====
+// アプリ全体の「状態 → 画面」を制御する
 
-  AppState? _state;
+class AppRoot extends StatefulWidget {
+  const AppRoot({super.key});
+
+  @override
+  State<AppRoot> createState() => _AppRootState();
+}
+
+class _AppRootState extends State<AppRoot> {
+  bool tutorialCompleted = false;
+
+  // 今は強制的に S3
+  AppState appState = AppState.completed;
 
   @override
   void initState() {
     super.initState();
-    onAppStart();
+    // 本来はここで AppStartService を呼ぶ
+    // 今回は仮で何もしない
   }
 
-  void onAppStart() {
-    if (appStartService.isFirstLaunch()) {
-      setState(() {
-        _state = AppState.tutorial;
-      });
-    } else {
-      setState(() {
-        _state = AppState.messageS3;
-      });
-    }
-  }
-
+  // Tutorial 完了コールバック
   void onTutorialCompleted() {
-    appStartService.completeTutorial();
-    final nextState = stateJudgeService.judgeAfterTutorial();
-
     setState(() {
-      _state = nextState;
+      tutorialCompleted = true;
+      appState = AppState.completed; // 強制S3
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_state == null) {
-      return const MaterialApp(home: Scaffold());
+    // ---- 初回起動 ----
+    if (!tutorialCompleted) {
+      return TutorialPage(onCompleted: onTutorialCompleted);
     }
 
-    switch (_state!) {
-      case AppState.tutorial:
-        return MaterialApp(
-          home: TutorialPage(onCompleted: onTutorialCompleted),
-        );
+    // ---- 状態による分岐 ----
+    switch (appState) {
+      case AppState.beforeNotification:
+        return const MessagePage(message: 'まだまだ頑張りましょう！');
 
-      case AppState.messageS3:
-        return const MaterialApp(home: MessagePage(message: 'お疲れさまでした。'));
+      case AppState.waitingFeedback:
+        return const FeedbackPage();
+
+      case AppState.completed:
+        return const MessagePage(message: '今日もお疲れさまでした');
     }
   }
 }
