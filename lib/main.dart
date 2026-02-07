@@ -57,7 +57,7 @@ class _AppRootState extends State<AppRoot> {
     // 今日の仮状態を作る
     dailyState = DailyState(
       date: DateTime.now(),
-      notifyTime: DateTime.now().add(const Duration(hours: 1)),
+      notifyTime: DateTime.now().subtract(const Duration(minutes: 1)),
       feedbackCompleted: false,
     );
 
@@ -76,9 +76,16 @@ class _AppRootState extends State<AppRoot> {
       tutorialCompleted = true;
 
       // 今回の仕様：Tutorial完了時はFB完了扱い
-      dailyState.feedbackCompleted = true;
+      dailyState.feedbackCompleted = false;
 
       _judgeState(); // ← 再判定
+    });
+  }
+
+  void onFeedbackSubmitted() {
+    setState(() {
+      dailyState.feedbackCompleted = true;
+      _judgeState();
     });
   }
 
@@ -95,7 +102,7 @@ class _AppRootState extends State<AppRoot> {
         return const MessagePage(message: 'まだまだ頑張りましょう！');
 
       case AppState.waitingFeedback:
-        return const FeedbackPage();
+        return FeedbackPage(onFeedbackSubmitted: onFeedbackSubmitted);
 
       case AppState.completed:
         return const MessagePage(message: '今日もお疲れさまでした');
