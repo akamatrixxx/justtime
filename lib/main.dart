@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
-import 'data/model/daily_state.dart';
-
+import 'logic/app_start/app_start_service.dart';
 import 'logic/state/app_state.dart';
 import 'logic/state/state_judge_service.dart';
+import 'data/repository/user_setting_repository_impl.dart';
+import 'data/model/daily_state.dart';
+
 import 'ui/tutorial/tutorial_page.dart';
-import 'ui/message/message_page.dart';
 import 'ui/feedback/feedback_page.dart';
+import 'ui/message/message_page.dart';
 
 // ===== main =====
 
@@ -43,66 +45,91 @@ class AppRoot extends StatefulWidget {
 }
 
 class _AppRootState extends State<AppRoot> {
-  bool tutorialCompleted = false;
+  final _userSettingRepo = UserSettingRepositoryImpl();
 
-  late DailyState dailyState;
-  late AppState appState;
+  bool _tutorialCompleted = false;
+  AppState? _appState;
+  bool _loading = true;
 
-  final StateJudgeService stateJudge = StateJudgeService();
+  DailyState? _dailyState;
+
+  final AppStartService _appStartService = AppStartService();
 
   @override
   void initState() {
     super.initState();
+    _loadInitialState();
+  }
 
-    // 今日の仮状態を作る
-    dailyState = DailyState(
+  // 初期状態の確認
+  Future<void> _loadInitialState() async {
+    final completed = await _userSettingRepo.isTutorialCompleted();
+
+    if (!completed) {
+      setState(() {
+        _tutorialCompleted = false;
+        _loading = false;
+      });
+      return;
+    }
+    // チュートリアル済みの場合のみ状態判定
+    final dailyState = DailyState(
       date: DateTime.now(),
-      notifyTime: DateTime.now().subtract(const Duration(minutes: 1)),
-      feedbackCompleted: false,
+      notifyTime: DateTime.now().add(const Duration(minutes: 1)),
     );
 
-    // 初回判定
-    _judgeState();
-  }
+    final stateJudge = StateJudgeService();
 
-  /// 状態判定をまとめた関数
-  void _judgeState() {
-    appState = stateJudge.judge(now: DateTime.now(), dailyState: dailyState);
-  }
-
-  /// Tutorial 完了コールバック
-  void onTutorialCompleted() {
     setState(() {
-      tutorialCompleted = true;
-
-      // 今回の仕様：Tutorial完了時はFB完了扱い
-      dailyState.feedbackCompleted = false;
-
-      _judgeState(); // ← 再判定
+      _tutorialCompleted = true;
+      _appState = stateJudge.judge(now: DateTime.now(), dailyState: dailyState);
+      _loading = false;
     });
   }
 
-  void onFeedbackSubmitted() {
+  // チュートリアル完了
+  void _onTutorialCompleted() async {
+    await _userSettingRepo.setTutorialCompleted(true);
+
+    final dailyState = DailyState(
+      date: DateTime.now(),
+      notifyTime: DateTime.now().subtract(const Duration(minutes: 1)),
+    );
+
+    final stateJudge = StateJudgeService();
+
     setState(() {
-      dailyState.feedbackCompleted = true;
-      _judgeState();
+      _tutorialCompleted = true;
+      _appState = stateJudge.judge(now: DateTime.now(), dailyState: dailyState);
+    });
+  }
+
+  // FB送信完了
+  void _onFeedbackSubmitted() {
+    setState(() {
+      _appState = AppState.completed;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // ---- 初回起動 ----
-    if (!tutorialCompleted) {
-      return TutorialPage(onCompleted: onTutorialCompleted);
+    // 読み込み中
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    // チュートリアル
+    if (!_tutorialCompleted) {
+      return TutorialPage(onCompleted: _onTutorialCompleted);
     }
 
-    // ---- 状態による分岐 ----
-    switch (appState) {
+    switch (_appState!) {
       case AppState.beforeNotification:
         return const MessagePage(message: 'まだまだ頑張りましょう！');
 
       case AppState.waitingFeedback:
-        return FeedbackPage(onFeedbackSubmitted: onFeedbackSubmitted);
+        return FeedbackPage(
+          onFeedbackSubmitted: _onFeedbackSubmitted, // ← 修正ポイント
+        );
 
       case AppState.completed:
         return const MessagePage(message: '今日もお疲れさまでした');
