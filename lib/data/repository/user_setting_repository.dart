@@ -1,4 +1,7 @@
 abstract class UserSettingRepository {
-  Future<bool> isTutorialCompleted();
-  Future<void> setTutorialCompleted(bool completed);
+  /// 初回起動かどうか
+  bool isFirstLaunch();
+
+  /// 初回起動完了を保存
+  void markFirstLaunchCompleted();
 }

@@ -1,18 +1,16 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'user_setting_repository.dart';
 
-class UserSettingRepositoryImpl implements UserSettingRepository {
-  static const _tutorialKey = 'tutorial_completed';
+class InMemoryUserSettingRepository implements UserSettingRepository {
+  bool _firstLaunch = true;
 
   @override
-  Future<bool> isTutorialCompleted() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_tutorialKey) ?? false;
+  bool isFirstLaunch() {
+    return _firstLaunch;
   }
 
   @override
-  Future<void> setTutorialCompleted(bool completed) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_tutorialKey, completed);
+  void markFirstLaunchCompleted() {
+    _firstLaunch = false;
   }
 }

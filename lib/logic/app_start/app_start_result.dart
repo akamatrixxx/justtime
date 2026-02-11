@@ -1,9 +1,9 @@
-import '../../data/model/daily_state.dart';
-import '../state/app_state.dart';
+// lib/logic/app_start/app_start_result.dart
+import '../../logic/state/app_state.dart';
 
 class AppStartResult {
+  final bool needTutorial;
   final AppState appState;
-  final DailyState dailyState;
 
-  AppStartResult({required this.appState, required this.dailyState});
+  AppStartResult({required this.needTutorial, required this.appState});
 }

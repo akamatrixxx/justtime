@@ -1,41 +1,30 @@
 import 'package:flutter/material.dart';
 
 import 'logic/app_start/app_start_service.dart';
-import 'logic/state/app_state.dart';
 import 'logic/state/state_judge_service.dart';
+import 'logic/state/app_state.dart';
 import 'data/repository/user_setting_repository_impl.dart';
-import 'data/model/daily_state.dart';
+import 'data/repository/user_setting_repository.dart';
 
 import 'ui/tutorial/tutorial_page.dart';
-import 'ui/feedback/feedback_page.dart';
 import 'ui/message/message_page.dart';
-
-// ===== main =====
+import 'ui/feedback/feedback_page.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const JustTimeApp());
 }
 
-// ===== MyApp =====
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class JustTimeApp extends StatelessWidget {
+  const JustTimeApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'JustTime',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
-      home: const AppRoot(),
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: AppRoot(),
     );
   }
 }
-
-// ===== AppRoot =====
-// アプリ全体の「状態 → 画面」を制御する
 
 class AppRoot extends StatefulWidget {
   const AppRoot({super.key});
@@ -45,67 +34,47 @@ class AppRoot extends StatefulWidget {
 }
 
 class _AppRootState extends State<AppRoot> {
-  final _userSettingRepo = UserSettingRepositoryImpl();
-
-  bool _tutorialCompleted = false;
   AppState? _appState;
-  bool _loading = true;
 
-  DailyState? _dailyState;
-
-  final AppStartService _appStartService = AppStartService();
+  late final UserSettingRepository userSettingRepository;
+  late final AppStartService appStartService;
 
   @override
   void initState() {
     super.initState();
-    _loadInitialState();
-  }
 
-  // 初期状態の確認
-  Future<void> _loadInitialState() async {
-    final completed = await _userSettingRepo.isTutorialCompleted();
+    // Repository
+    userSettingRepository = InMemoryUserSettingRepository();
 
-    if (!completed) {
-      setState(() {
-        _tutorialCompleted = false;
-        _loading = false;
-      });
-      return;
-    }
-    // チュートリアル済みの場合のみ状態判定
-    final dailyState = DailyState(
-      date: DateTime.now(),
-      notifyTime: DateTime.now().add(const Duration(minutes: 1)),
+    // Service
+    appStartService = AppStartService(
+      userSettingRepository,
+      StateJudgeService(),
     );
 
-    final stateJudge = StateJudgeService();
+    _startApp();
+  }
+
+  void _startApp() {
+    final result = appStartService.decideAppState();
 
     setState(() {
-      _tutorialCompleted = true;
-      _appState = stateJudge.judge(now: DateTime.now(), dailyState: dailyState);
-      _loading = false;
+      _appState = result;
     });
   }
 
-  // チュートリアル完了
-  void _onTutorialCompleted() async {
-    await _userSettingRepo.setTutorialCompleted(true);
+  void _onTutorialCompleted() {
+    // チュートリアル完了処理
+    appStartService.completeTutorial();
 
-    final dailyState = DailyState(
-      date: DateTime.now(),
-      notifyTime: DateTime.now().subtract(const Duration(minutes: 1)),
-    );
-
-    final stateJudge = StateJudgeService();
-
+    // 状態再判定
+    final newState = appStartService.decideAppState();
     setState(() {
-      _tutorialCompleted = true;
-      _appState = stateJudge.judge(now: DateTime.now(), dailyState: dailyState);
+      _appState = newState;
     });
   }
 
-  // FB送信完了
-  void _onFeedbackSubmitted() {
+  void _onFeedbackCompleted() {
     setState(() {
       _appState = AppState.completed;
     });
@@ -113,23 +82,23 @@ class _AppRootState extends State<AppRoot> {
 
   @override
   Widget build(BuildContext context) {
-    // 読み込み中
-    if (_loading) {
+    // 🔵 起動中
+    if (_appState == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    // チュートリアル
-    if (!_tutorialCompleted) {
+
+    // 🔵 チュートリアル未完了
+    if (userSettingRepository.isFirstLaunch()) {
       return TutorialPage(onCompleted: _onTutorialCompleted);
     }
 
+    // 🔵 状態別表示
     switch (_appState!) {
       case AppState.beforeNotification:
         return const MessagePage(message: 'まだまだ頑張りましょう！');
 
       case AppState.waitingFeedback:
-        return FeedbackPage(
-          onFeedbackSubmitted: _onFeedbackSubmitted, // ← 修正ポイント
-        );
+        return FeedbackPage(onFeedbackSubmitted: _onFeedbackCompleted);
 
       case AppState.completed:
         return const MessagePage(message: '今日もお疲れさまでした');

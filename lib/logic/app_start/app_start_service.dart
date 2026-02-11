@@ -1,25 +1,55 @@
+import 'package:flutter/foundation.dart';
+
 import '../../data/model/daily_state.dart';
+import '../../data/repository/user_setting_repository.dart';
 import '../state/state_judge_service.dart';
 import '../state/app_state.dart';
-import 'app_start_result.dart';
 
 class AppStartService {
-  final StateJudgeService _stateJudge = StateJudgeService();
+  final UserSettingRepository userSettingRepository;
+  final StateJudgeService stateJudgeService;
 
-  AppStartResult onAppStart() {
+  AppStartService(this.userSettingRepository, this.stateJudgeService);
+
+  /// アプリ起動時の状態判定
+  AppState decideAppState() {
+    debugPrint('[AppStart] ===== App Start =====');
+
+    // ① 初回起動フラグ
+    final isFirstLaunch = userSettingRepository.isFirstLaunch() == true;
+
+    debugPrint('[AppStart] 初回起動フラグ: ${!isFirstLaunch ? "完了済み" : "未完了"}');
+
+    if (isFirstLaunch) {
+      debugPrint('[AppStart] → 判定結果: S1 (チュートリアル)');
+      return AppState.beforeNotification;
+    }
+
+    // ② 今日の日付
     final now = DateTime.now();
+    debugPrint('[AppStart] 現在時刻: $now');
 
-    // 🔹 仮：通知時刻を「今から1分前」にする
-    final notifyTime = now.subtract(const Duration(minutes: 1));
-
+    // ③ 今日の DailyState（今は仮）
     final dailyState = DailyState(
-      date: now,
-      notifyTime: notifyTime,
-      feedbackCompleted: false,
+      date: DateTime(now.year, now.month, now.day),
+      notifyTime: now.add(const Duration(hours: 1)),
     );
 
-    final appState = _stateJudge.judge(now: now, dailyState: dailyState);
+    debugPrint('[AppStart] DailyState.date: ${dailyState.date}');
+    debugPrint('[AppStart] DailyState.notifyTime: ${dailyState.notifyTime}');
 
-    return AppStartResult(appState: appState, dailyState: dailyState);
+    // ④ 状態判定
+    final appState = stateJudgeService.judge(now: now, dailyState: dailyState);
+
+    debugPrint('[AppStart] 判定結果: $appState');
+    debugPrint('[AppStart] =====================');
+
+    return appState;
+  }
+
+  /// チュートリアル完了処理
+  void completeTutorial() {
+    debugPrint('[AppStart] チュートリアル完了 → フラグ更新');
+    userSettingRepository.markFirstLaunchCompleted();
   }
 }
