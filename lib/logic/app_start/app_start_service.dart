@@ -12,11 +12,11 @@ class AppStartService {
   AppStartService(this.userSettingRepository, this.stateJudgeService);
 
   /// アプリ起動時の状態判定
-  AppState decideAppState() {
+  Future<AppState> decideAppState() async {
     debugPrint('[AppStart] ===== App Start =====');
 
     // ① 初回起動フラグ
-    final isFirstLaunch = userSettingRepository.isFirstLaunch() == true;
+    final isFirstLaunch = await userSettingRepository.isFirstLaunch();
 
     debugPrint('[AppStart] 初回起動フラグ: ${!isFirstLaunch ? "完了済み" : "未完了"}');
 

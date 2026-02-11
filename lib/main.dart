@@ -34,19 +34,17 @@ class AppRoot extends StatefulWidget {
 }
 
 class _AppRootState extends State<AppRoot> {
-  AppState? _appState;
-
   late final UserSettingRepository userSettingRepository;
   late final AppStartService appStartService;
+
+  AppState? _appState;
+  bool _needTutorial = false;
 
   @override
   void initState() {
     super.initState();
 
-    // Repository
-    userSettingRepository = InMemoryUserSettingRepository();
-
-    // Service
+    userSettingRepository = UserSettingRepositoryImpl();
     appStartService = AppStartService(
       userSettingRepository,
       StateJudgeService(),
@@ -55,50 +53,53 @@ class _AppRootState extends State<AppRoot> {
     _startApp();
   }
 
-  void _startApp() {
-    final result = appStartService.decideAppState();
+  Future<void> _startApp() async {
+    final isFirstLaunch = await userSettingRepository.isFirstLaunch();
+
+    if (isFirstLaunch) {
+      setState(() {
+        _needTutorial = true;
+      });
+      return;
+    }
+
+    final state = await appStartService.decideAppState();
 
     setState(() {
-      _appState = result;
+      _appState = state;
     });
   }
 
-  void _onTutorialCompleted() {
-    // チュートリアル完了処理
-    appStartService.completeTutorial();
+  Future<void> _onTutorialCompleted() async {
+    await userSettingRepository.markFirstLaunchCompleted();
 
-    // 状態再判定
-    final newState = appStartService.decideAppState();
-    setState(() {
-      _appState = newState;
-    });
-  }
+    final state = await appStartService.decideAppState();
 
-  void _onFeedbackCompleted() {
     setState(() {
-      _appState = AppState.completed;
+      _needTutorial = false;
+      _appState = state;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     // 🔵 起動中
-    if (_appState == null) {
+    if (_needTutorial == false && _appState == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // 🔵 チュートリアル未完了
-    if (userSettingRepository.isFirstLaunch()) {
+    // 🔵 チュートリアル
+    if (_needTutorial) {
       return TutorialPage(onCompleted: _onTutorialCompleted);
     }
 
-    // 🔵 状態別表示
+    // 🔵 状態別画面
     switch (_appState!) {
       case AppState.beforeNotification:
         return const MessagePage(message: 'まだまだ頑張りましょう！');
 
       case AppState.waitingFeedback:
-        return FeedbackPage(onFeedbackSubmitted: _onFeedbackCompleted);
+        return FeedbackPage(onFeedbackSubmitted: () {});
 
       case AppState.completed:
         return const MessagePage(message: '今日もお疲れさまでした');
