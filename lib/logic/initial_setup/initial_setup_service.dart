@@ -1,8 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'dart:developer';
+import '../../data/model/user_setting.dart';
+import '../../data/repository/user_setting_repository.dart';
 
 class InitialSetupService {
-  void completeInitialSetup({
+  final UserSettingRepository userSettingRepository;
+  InitialSetupService(this.userSettingRepository);
+
+  Future<void> completeInitialSetup({
     required int workStartHour,
     required int workStartMinute,
     required int workEndHour,
@@ -11,7 +16,21 @@ class InitialSetupService {
     required int sleepStartMinute,
     required int sleepEndHour,
     required int sleepEndMinute,
-  }) {
+  }) async {
+    final setting = UserSetting(
+      isFirstLaunch: false,
+      workStartHour: workStartHour,
+      workStartMinute: workStartMinute,
+      workEndHour: workEndHour,
+      workEndMinute: workEndMinute,
+      sleepStartHour: sleepStartHour,
+      sleepStartMinute: sleepStartMinute,
+      sleepEndHour: sleepEndHour,
+      sleepEndMinute: sleepEndMinute,
+    );
+
+    await userSettingRepository.saveUserSetting(setting);
+
     // 就業時間帯中央値
     final start = workStartHour * 60 + workStartMinute;
     final end = workEndHour * 60 + workEndMinute;

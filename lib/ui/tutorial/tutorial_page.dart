@@ -3,8 +3,13 @@ import '../../logic/initial_setup/initial_setup_service.dart';
 
 class TutorialPage extends StatefulWidget {
   final VoidCallback onCompleted;
+  final InitialSetupService initialSetupService;
 
-  const TutorialPage({super.key, required this.onCompleted});
+  const TutorialPage({
+    super.key,
+    required this.onCompleted,
+    required this.initialSetupService,
+  });
 
   @override
   State<TutorialPage> createState() => _TutorialPageState();
@@ -22,8 +27,6 @@ class _TutorialPageState extends State<TutorialPage> {
   int sleepStartMinute = 0;
   int sleepEndHour = 24;
   int sleepEndMinute = 0;
-
-  final _service = InitialSetupService();
 
   @override
   Widget build(BuildContext context) {
@@ -67,8 +70,8 @@ class _TutorialPageState extends State<TutorialPage> {
     );
   }
 
-  void _completeTutorial() {
-    _service.completeInitialSetup(
+  void _completeTutorial() async {
+    await widget.initialSetupService.completeInitialSetup(
       workStartHour: workStartHour,
       workStartMinute: workStartMinute,
       workEndHour: workEndHour,

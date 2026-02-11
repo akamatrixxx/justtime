@@ -7,25 +7,32 @@ class AppDatabase {
   static Future<Database> get database async {
     if (_database != null) return _database!;
 
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'justtime.db');
+    _database = await _initDB();
+    return _database!;
+  }
 
-    _database = await openDatabase(
+  static Future<Database> _initDB() async {
+    final path = join(await getDatabasesPath(), 'justtime.db');
+
+    return await openDatabase(
       path,
       version: 1,
       onCreate: (db, version) async {
         await db.execute('''
-          CREATE TABLE user_setting (
+          CREATE TABLE user_setting(
             id INTEGER PRIMARY KEY,
-            is_first_launch INTEGER
+            is_first_launch INTEGER,
+            work_start_hour INTEGER,
+            work_start_minute INTEGER,
+            work_end_hour INTEGER,
+            work_end_minute INTEGER,
+            sleep_start_hour INTEGER,
+            sleep_start_minute INTEGER,
+            sleep_end_hour INTEGER,
+            sleep_end_minute INTEGER
           )
         ''');
-
-        // 初期データ
-        await db.insert('user_setting', {'id': 1, 'is_first_launch': 1});
       },
     );
-
-    return _database!;
   }
 }

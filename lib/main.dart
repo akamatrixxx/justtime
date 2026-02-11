@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'logic/app_start/app_start_service.dart';
 import 'logic/state/state_judge_service.dart';
+import 'logic/initial_setup/initial_setup_service.dart';
 import 'logic/state/app_state.dart';
 import 'data/repository/user_setting_repository_impl.dart';
 import 'data/repository/user_setting_repository.dart';
@@ -35,6 +36,7 @@ class AppRoot extends StatefulWidget {
 
 class _AppRootState extends State<AppRoot> {
   late final UserSettingRepository userSettingRepository;
+  late final InitialSetupService initialSetupService;
   late final AppStartService appStartService;
 
   AppState? _appState;
@@ -45,6 +47,7 @@ class _AppRootState extends State<AppRoot> {
     super.initState();
 
     userSettingRepository = UserSettingRepositoryImpl();
+    initialSetupService = InitialSetupService(userSettingRepository);
     appStartService = AppStartService(
       userSettingRepository,
       StateJudgeService(),
@@ -68,6 +71,9 @@ class _AppRootState extends State<AppRoot> {
     setState(() {
       _appState = state;
     });
+
+    // デバッグ表示
+    // await userSettingRepository.debugPrintUserSetting();
   }
 
   Future<void> _onTutorialCompleted() async {
@@ -90,7 +96,10 @@ class _AppRootState extends State<AppRoot> {
 
     // 🔵 チュートリアル
     if (_needTutorial) {
-      return TutorialPage(onCompleted: _onTutorialCompleted);
+      return TutorialPage(
+        onCompleted: _onTutorialCompleted,
+        initialSetupService: initialSetupService,
+      );
     }
 
     // 🔵 状態別画面
