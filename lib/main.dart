@@ -6,6 +6,8 @@ import 'logic/initial_setup/initial_setup_service.dart';
 import 'logic/state/app_state.dart';
 import 'data/repository/user_setting_repository_impl.dart';
 import 'data/repository/user_setting_repository.dart';
+import 'data/repository/daily_state_repository.dart';
+import 'data/db/app_database.dart';
 
 import 'ui/tutorial/tutorial_page.dart';
 import 'ui/message/message_page.dart';
@@ -38,6 +40,7 @@ class _AppRootState extends State<AppRoot> {
   late final UserSettingRepository userSettingRepository;
   late final InitialSetupService initialSetupService;
   late final AppStartService appStartService;
+  late final DailyStateRepository dailyStateRepository;
 
   AppState? _appState;
   bool _needTutorial = false;
@@ -46,11 +49,16 @@ class _AppRootState extends State<AppRoot> {
   void initState() {
     super.initState();
 
+    final database = AppDatabase.database;
+
     userSettingRepository = UserSettingRepositoryImpl();
     initialSetupService = InitialSetupService(userSettingRepository);
+    dailyStateRepository = DailyStateRepository(database);
+
     appStartService = AppStartService(
       userSettingRepository,
       StateJudgeService(),
+      dailyStateRepository,
     );
 
     _startApp();
@@ -73,7 +81,8 @@ class _AppRootState extends State<AppRoot> {
     });
 
     // デバッグ表示
-    // await userSettingRepository.debugPrintUserSetting();
+    await userSettingRepository.debugPrintUserSetting();
+    await dailyStateRepository.debugPrintAll();
   }
 
   Future<void> _onTutorialCompleted() async {

@@ -16,8 +16,9 @@ class AppDatabase {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2, // 🔵 1 → 2 に変更（超重要）
       onCreate: (db, version) async {
+        // user_setting テーブル
         await db.execute('''
           CREATE TABLE user_setting(
             id INTEGER PRIMARY KEY,
@@ -32,6 +33,28 @@ class AppDatabase {
             sleep_end_minute INTEGER
           )
         ''');
+
+        // 🔵 daily_state テーブル追加
+        await db.execute('''
+          CREATE TABLE daily_state(
+            date TEXT PRIMARY KEY,
+            notify_time TEXT,
+            feedback_completed INTEGER
+          )
+        ''');
+      },
+
+      // 🔵 既存ユーザー用アップグレード処理
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('''
+            CREATE TABLE daily_state(
+              date TEXT PRIMARY KEY,
+              notify_time TEXT,
+              feedback_completed INTEGER
+            )
+          ''');
+        }
       },
     );
   }

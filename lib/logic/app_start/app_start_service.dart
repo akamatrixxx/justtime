@@ -4,12 +4,18 @@ import '../../data/model/daily_state.dart';
 import '../../data/repository/user_setting_repository.dart';
 import '../state/state_judge_service.dart';
 import '../state/app_state.dart';
+import '../../data/repository/daily_state_repository.dart';
 
 class AppStartService {
   final UserSettingRepository userSettingRepository;
   final StateJudgeService stateJudgeService;
+  final DailyStateRepository repository;
 
-  AppStartService(this.userSettingRepository, this.stateJudgeService);
+  AppStartService(
+    this.userSettingRepository,
+    this.stateJudgeService,
+    this.repository,
+  );
 
   /// アプリ起動時の状態判定
   Future<AppState> decideAppState() async {
@@ -27,20 +33,22 @@ class AppStartService {
 
     // ② 今日の日付
     final now = DateTime.now();
-    debugPrint('[AppStart] 現在時刻: $now');
 
     // ③ 今日の DailyState（今は仮）
     final dailyState = DailyState(
       date: DateTime(now.year, now.month, now.day),
       notifyTime: now.add(const Duration(hours: 1)),
+      feedbackCompleted: false,
     );
 
-    debugPrint('[AppStart] DailyState.date: ${dailyState.date}');
-    debugPrint('[AppStart] DailyState.notifyTime: ${dailyState.notifyTime}');
+    // Stateを保存
+    await repository.save(dailyState);
 
     // ④ 状態判定
     final appState = stateJudgeService.judge(now: now, dailyState: dailyState);
 
+    final today = await repository.getByDate(DateTime.now());
+    debugPrint('[AppStart] 今日の DailyState: $today');
     debugPrint('[AppStart] 判定結果: $appState');
     debugPrint('[AppStart] =====================');
 
