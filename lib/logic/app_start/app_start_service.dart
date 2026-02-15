@@ -23,7 +23,7 @@ class AppStartService {
 
     // ① 初回起動フラグ
     final isFirstLaunch = await userSettingRepository.isFirstLaunch();
-
+    final DailyStateRepository dailyStateRepository = repository;
     debugPrint('[AppStart] 初回起動フラグ: ${!isFirstLaunch ? "完了済み" : "未完了"}');
 
     if (isFirstLaunch) {
@@ -33,22 +33,29 @@ class AppStartService {
 
     // ② 今日の日付
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
 
-    // ③ 今日の DailyState（今は仮）
-    final dailyState = DailyState(
-      date: DateTime(now.year, now.month, now.day),
-      notifyTime: now.add(const Duration(hours: 1)),
-      feedbackCompleted: false,
-    );
+    // 今日のDailyStateを取得。なければ新規作成して保存
+    DailyState? dailyState = await dailyStateRepository.getByDate(today);
 
-    // Stateを保存
-    await repository.save(dailyState);
+    if (dailyState == null) {
+      debugPrint('[AppStart] 今日のDailyStateなし → 新規作成');
 
-    // ④ 状態判定
+      dailyState = DailyState(
+        date: today,
+        notifyTime: now.add(const Duration(hours: 1)),
+        feedbackCompleted: false,
+      );
+
+      await dailyStateRepository.save(dailyState);
+    } else {
+      debugPrint('[AppStart] 今日のDailyStateあり → 既存利用');
+    }
+
+    debugPrint('[AppStart] notifyTime: ${dailyState.notifyTime}');
+
     final appState = stateJudgeService.judge(now: now, dailyState: dailyState);
 
-    final today = await repository.getByDate(DateTime.now());
-    debugPrint('[AppStart] 今日の DailyState: $today');
     debugPrint('[AppStart] 判定結果: $appState');
     debugPrint('[AppStart] =====================');
 
