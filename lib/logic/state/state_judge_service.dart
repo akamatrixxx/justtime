@@ -1,23 +1,36 @@
-import '../../data/model/daily_state.dart';
-import 'app_state.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../data/repository/daily_state_repository.dart';
+import 'app_state.dart';
+
 class StateJudgeService {
-  AppState judge({required DateTime now, required DailyState dailyState}) {
-    // ① 通知前？
-    if (now.isBefore(dailyState.notifyTime)) {
-      debugPrint('状態判定: beforeNotification');
-      return AppState.beforeNotification; // S1
+  final DailyStateRepository repository;
+
+  StateJudgeService(this.repository);
+
+  Future<AppState> judgeState() async {
+    debugPrint('[P3] ===== judgeState =====');
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final dailyState = await repository.getByDate(today);
+
+    if (dailyState == null) {
+      return AppState.beforeNotification;
     }
 
-    // ② 通知後 & FB未完了？
-    if (!dailyState.feedbackCompleted) {
-      debugPrint('状態判定: waitingFeedback');
-      return AppState.waitingFeedback; // S2
+    /// 通知前：フィードバック未完了かつ通知時刻前
+    if (!dailyState.feedbackCompleted && now.isBefore(dailyState.notifyTime)) {
+      return AppState.beforeNotification;
     }
 
-    // ③ FB完了済
-    debugPrint('状態判定: completed');
-    return AppState.completed; // S3
+    /// FB待ち状態：フィードバック未完了かつ通知時刻後
+    if (!dailyState.feedbackCompleted && now.isAfter(dailyState.notifyTime)) {
+      return AppState.waitingFeedback;
+    }
+
+    /// 完了状態：フィードバック完了
+    return AppState.completed;
   }
 }

@@ -3,17 +3,15 @@ title 初回起動シーケンス（P1 → P3連携版）
 
 actor ユーザー
 participant "UI\n(TutorialPage)" as UI
-participant "AppStartService\n(P1)" as P1
-participant "StateJudgeService\n(P3)" as P3
+participant "AppStartService\n(P2)" as P2
+participant "InitialSetupService\n(P1)" as P1
+' participant "StateJudgeService\n(P3)" as P3
 participant "Repository\n(SQLite)" as DB
 participant "OS\n(通知)" as OS_Notify
 participant "OS\n(時刻)" as OS_Time
 
-== 初回起動検知 ==
-UI -> P1 : startInitialSetup()
 
-P1 -> DB : 初回起動フラグ取得
-DB --> P1 : 初回起動=true
+P2 -> P1 : InitialSetup()
 
 == チュートリアル ==
 P1 -> UI : showTutorial()
@@ -51,18 +49,18 @@ P1 -> DB : MD_3 就寝時間帯
 P1 -> DB : DD_1 当日通知時刻
 P1 -> DB : DD_2 FB完了フラグ=false
 
-== 状態判定へ委譲 ==
-P1 -> P3 : judgeState()
+' == 状態判定へ委譲 ==
+' P1 -> P3 : judgeState()
 
-P3 -> DB : DD_1 通知時刻
-P3 -> DB : DD_2 FB完了フラグ
-P3 -> OS_Time : 現在時刻取得
-OS_Time --> P3 : 現在時刻
+' P3 -> DB : DD_1 通知時刻
+' P3 -> DB : DD_2 FB完了フラグ
+' P3 -> OS_Time : 現在時刻取得
+' OS_Time --> P3 : 現在時刻
 
-P3 -> P3 : 状態判定(S1/S2/S3)
+' P3 -> P3 : 状態判定(S1/S2/S3)
 
-== メッセージ表示 ==
-P3 -> UI : showMessageByState()
-UI -> ユーザー : 状態別メッセージ表示
+' == メッセージ表示 ==
+' P3 -> UI : showMessageByState()
+' UI -> ユーザー : 状態別メッセージ表示
 
 @enduml

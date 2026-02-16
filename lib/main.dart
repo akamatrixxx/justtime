@@ -37,12 +37,23 @@ class AppRoot extends StatefulWidget {
   State<AppRoot> createState() => _AppRootState();
 }
 
+class EntryService {
+  final AppStartService appStartService;
+  final StateJudgeService stateJudgeService;
+
+  EntryService(this.appStartService, this.stateJudgeService);
+
+  Future<AppState> onAppStart() async {
+    await appStartService.handleAppStart();
+    return await stateJudgeService.judgeState();
+  }
+}
+
 class _AppRootState extends State<AppRoot> {
-  late final UserSettingRepository userSettingRepository;
-  late final InitialSetupService initialSetupService;
-  late final AppStartService appStartService;
-  late final DailyStateRepository dailyStateRepository;
-  late final NotificationTimeService notificationService;
+  late EntryService entryService;
+  late UserSettingRepository userSettingRepository;
+  late DailyStateRepository dailyStateRepository;
+  late InitialSetupService initialSetupService;
 
   AppState? _appState;
   bool _needTutorial = false;
@@ -51,52 +62,44 @@ class _AppRootState extends State<AppRoot> {
   void initState() {
     super.initState();
 
-    final database = AppDatabase.database;
-
-    userSettingRepository = UserSettingRepositoryImpl();
-    initialSetupService = InitialSetupService(userSettingRepository);
-    dailyStateRepository = DailyStateRepository(database);
-
-    appStartService = AppStartService(
-      userSettingRepository,
-      StateJudgeService(),
-      dailyStateRepository,
-      NotificationTimeService(),
-    );
-
+    _initializeServices();
     _startApp();
   }
 
+  /// サービスの初期化
+  void _initializeServices() {
+    // リポジトリを初期化
+    userSettingRepository = UserSettingRepositoryImpl();
+    dailyStateRepository = DailyStateRepository(AppDatabase.database);
+
+    // 各サービスを作成
+    final appStartService = AppStartService(
+      userSettingRepository,
+      dailyStateRepository,
+    );
+
+    final stateJudgeService = StateJudgeService(dailyStateRepository);
+
+    initialSetupService = InitialSetupService(userSettingRepository);
+
+    entryService = EntryService(appStartService, stateJudgeService);
+  }
+
+  /// アプリ起動時の処理
   Future<void> _startApp() async {
-    final isFirstLaunch = await userSettingRepository.isFirstLaunch();
-
-    if (isFirstLaunch) {
-      setState(() {
-        _needTutorial = true;
-      });
-      return;
-    }
-
-    final state = await appStartService.decideAppState();
+    final state = await entryService.onAppStart();
 
     setState(() {
       _appState = state;
     });
 
-    // デバッグ表示
     await userSettingRepository.debugPrintUserSetting();
     await dailyStateRepository.debugPrintAll();
   }
 
+  /// [暫定]チュートリアル完了を通知
   Future<void> _onTutorialCompleted() async {
     await userSettingRepository.markFirstLaunchCompleted();
-
-    final state = await appStartService.decideAppState();
-
-    setState(() {
-      _needTutorial = false;
-      _appState = state;
-    });
   }
 
   @override
