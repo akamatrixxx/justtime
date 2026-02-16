@@ -1,5 +1,6 @@
 class UserSetting {
   final bool isFirstLaunch;
+  final DateTime? lastUsedDate;
 
   final int workStartHour;
   final int workStartMinute;
@@ -13,6 +14,7 @@ class UserSetting {
 
   UserSetting({
     required this.isFirstLaunch,
+    required this.lastUsedDate,
     required this.workStartHour,
     required this.workStartMinute,
     required this.workEndHour,
@@ -26,6 +28,7 @@ class UserSetting {
   Map<String, dynamic> toMap() {
     return {
       'is_first_launch': isFirstLaunch ? 1 : 0,
+      'last_used_date': lastUsedDate?.toIso8601String(),
       'work_start_hour': workStartHour,
       'work_start_minute': workStartMinute,
       'work_end_hour': workEndHour,
@@ -40,6 +43,9 @@ class UserSetting {
   factory UserSetting.fromMap(Map<String, dynamic> map) {
     return UserSetting(
       isFirstLaunch: map['is_first_launch'] == 1,
+      lastUsedDate: map['last_used_date'] != null
+          ? DateTime.parse(map['last_used_date'])
+          : null,
       workStartHour: map['work_start_hour'],
       workStartMinute: map['work_start_minute'],
       workEndHour: map['work_end_hour'],

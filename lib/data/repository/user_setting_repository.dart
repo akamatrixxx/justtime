@@ -13,6 +13,12 @@ abstract class UserSettingRepository {
   /// ユーザー設定を読み込み
   Future<UserSetting?> loadUserSetting();
 
+  /// 最終使用日を取得
+  Future<DateTime?> getLastUsedDate();
+
+  /// 最終使用日を更新
+  Future<void> setLastUsedDate(DateTime date);
+
   /// デバッグ用: user_settingテーブルの内容を表示
   Future<void> debugPrintUserSetting();
 }

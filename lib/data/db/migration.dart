@@ -1,6 +1,7 @@
 CREATE TABLE user_setting(
   id INTEGER PRIMARY KEY,
   is_first_launch INTEGER,
+  last_used_date TEXT,
   work_start_hour INTEGER,
   work_start_minute INTEGER,
   work_end_hour INTEGER,

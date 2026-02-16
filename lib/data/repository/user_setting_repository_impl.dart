@@ -55,6 +55,36 @@ class UserSettingRepositoryImpl implements UserSettingRepository {
     return UserSetting.fromMap(result.first);
   }
 
+  @override
+  Future<DateTime?> getLastUsedDate() async {
+    final db = await AppDatabase.database;
+
+    final result = await db.query(
+      'user_setting',
+      where: 'id = ?',
+      whereArgs: [1],
+    );
+
+    if (result.isEmpty) return null;
+
+    final value = result.first['last_used_date'];
+    if (value == null) return null;
+
+    return DateTime.parse(value as String);
+  }
+
+  @override
+  Future<void> setLastUsedDate(DateTime date) async {
+    final db = await AppDatabase.database;
+
+    await db.update(
+      'user_setting',
+      {'last_used_date': date.toIso8601String()},
+      where: 'id = ?',
+      whereArgs: [1],
+    );
+  }
+
   // デバッグ用: user_settingテーブルの内容を表示
   @override
   Future<void> debugPrintUserSetting() async {

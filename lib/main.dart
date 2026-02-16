@@ -4,6 +4,7 @@ import 'logic/app_start/app_start_service.dart';
 import 'logic/state/state_judge_service.dart';
 import 'logic/initial_setup/initial_setup_service.dart';
 import 'logic/state/app_state.dart';
+import 'logic/notification_time/notification_time_service.dart';
 import 'data/repository/user_setting_repository_impl.dart';
 import 'data/repository/user_setting_repository.dart';
 import 'data/repository/daily_state_repository.dart';
@@ -41,6 +42,7 @@ class _AppRootState extends State<AppRoot> {
   late final InitialSetupService initialSetupService;
   late final AppStartService appStartService;
   late final DailyStateRepository dailyStateRepository;
+  late final NotificationTimeService notificationService;
 
   AppState? _appState;
   bool _needTutorial = false;
@@ -59,6 +61,7 @@ class _AppRootState extends State<AppRoot> {
       userSettingRepository,
       StateJudgeService(),
       dailyStateRepository,
+      NotificationTimeService(),
     );
 
     _startApp();

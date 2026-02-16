@@ -2,10 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'dart:developer';
 import '../../data/model/user_setting.dart';
 import '../../data/repository/user_setting_repository.dart';
+import '../../data/model/daily_state.dart';
+import '../../data/repository/daily_state_repository.dart';
+import '../../data/db/app_database.dart';
 
 class InitialSetupService {
   final UserSettingRepository userSettingRepository;
   InitialSetupService(this.userSettingRepository);
+  final dailyStateRepository = DailyStateRepository(AppDatabase.database);
 
   Future<void> completeInitialSetup({
     required int workStartHour,
@@ -17,8 +21,10 @@ class InitialSetupService {
     required int sleepEndHour,
     required int sleepEndMinute,
   }) async {
+    final today = DateTime.now();
     final setting = UserSetting(
       isFirstLaunch: false,
+      lastUsedDate: today,
       workStartHour: workStartHour,
       workStartMinute: workStartMinute,
       workEndHour: workEndHour,
@@ -39,6 +45,20 @@ class InitialSetupService {
     final midHour = mid ~/ 60;
     final midMinute = mid % 60;
 
+    final state = DailyState(
+      date: today,
+      notifyTime: DateTime(
+        today.year,
+        today.month,
+        today.day,
+        midHour,
+        midMinute,
+      ),
+      feedbackCompleted: false,
+    );
+
+    await dailyStateRepository.save(state);
+
     log(
       '初回通知時刻: '
       '${midHour.toString().padLeft(2, '0')}:'
@@ -55,7 +75,5 @@ class InitialSetupService {
     debugPrint(
       'Initial Notification Time: ${midHour.toString().padLeft(2, '0')}:${midMinute.toString().padLeft(2, '0')}',
     );
-
-    // TODO: Repository保存（次ステップ）
   }
 }

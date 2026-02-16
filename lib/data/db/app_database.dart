@@ -16,23 +16,24 @@ class AppDatabase {
 
     return await openDatabase(
       path,
-      version: 2, // 🔵 1 → 2 に変更（超重要）
+      version: 3,
       onCreate: (db, version) async {
         // user_setting テーブル
         await db.execute('''
-          CREATE TABLE user_setting(
-            id INTEGER PRIMARY KEY,
-            is_first_launch INTEGER,
-            work_start_hour INTEGER,
-            work_start_minute INTEGER,
-            work_end_hour INTEGER,
-            work_end_minute INTEGER,
-            sleep_start_hour INTEGER,
-            sleep_start_minute INTEGER,
-            sleep_end_hour INTEGER,
-            sleep_end_minute INTEGER
-          )
-        ''');
+        CREATE TABLE user_setting(
+          id INTEGER PRIMARY KEY,
+          is_first_launch INTEGER,
+          last_used_date TEXT,
+          work_start_hour INTEGER,
+          work_start_minute INTEGER,
+          work_end_hour INTEGER,
+          work_end_minute INTEGER,
+          sleep_start_hour INTEGER,
+          sleep_start_minute INTEGER,
+          sleep_end_hour INTEGER,
+          sleep_end_minute INTEGER
+        )
+      ''');
 
         // 🔵 daily_state テーブル追加
         await db.execute('''
@@ -53,6 +54,13 @@ class AppDatabase {
               notify_time TEXT,
               feedback_completed INTEGER
             )
+          ''');
+        }
+
+        if (oldVersion < 3) {
+          await db.execute('''
+            ALTER TABLE user_setting
+            ADD COLUMN last_used_date TEXT
           ''');
         }
       },
