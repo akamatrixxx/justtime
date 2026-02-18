@@ -40,14 +40,10 @@ class InitialSetupService {
     final setting = UserSetting(
       isFirstLaunch: false,
       lastUsedDate: today,
-      workStartHour: workStartHour,
-      workStartMinute: workStartMinute,
-      workEndHour: workEndHour,
-      workEndMinute: workEndMinute,
-      sleepStartHour: sleepStartHour,
-      sleepStartMinute: sleepStartMinute,
-      sleepEndHour: sleepEndHour,
-      sleepEndMinute: sleepEndMinute,
+      workStart: TimeOfDay(hour: workStartHour, minute: workStartMinute),
+      workEnd: TimeOfDay(hour: workEndHour, minute: workEndMinute),
+      sleepStart: TimeOfDay(hour: sleepStartHour, minute: sleepStartMinute),
+      sleepEnd: TimeOfDay(hour: sleepEndHour, minute: sleepEndMinute),
     );
 
     await userSettingRepository.saveUserSetting(setting);
