@@ -41,7 +41,8 @@ class AppDatabase {
             date TEXT PRIMARY KEY,
             notify_hour INTEGER,
             notify_minute INTEGER,
-            feedback_completed INTEGER
+            feedback_completed INTEGER,
+            feedback_type INTEGER
           )
         ''');
       },
@@ -54,7 +55,8 @@ class AppDatabase {
               date TEXT PRIMARY KEY,
               notify_hour INTEGER,
               notify_minute INTEGER,
-              feedback_completed INTEGER
+              feedback_completed INTEGER,
+              feedback_type INTEGER
             )
           ''');
         }

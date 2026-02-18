@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import 'logic/app_start/app_start_service.dart';
 import 'logic/state/state_judge_service.dart';
 import 'logic/initial_setup/initial_setup_service.dart';
-import 'logic/state/app_state.dart';
 import 'logic/notification_time/notification_time_service.dart';
+import 'logic/feedback/feedback_service.dart';
+
 import 'data/repository/user_setting_repository_impl.dart';
 import 'data/repository/user_setting_repository.dart';
 import 'data/repository/daily_state_repository.dart';
 import 'data/db/app_database.dart';
+import 'data/model/app_state.dart';
+import 'data/model/feedback.dart';
 
 import 'ui/tutorial/tutorial_page.dart';
 import 'ui/message/message_page.dart';
@@ -69,6 +72,7 @@ class EntryService {
 
 class _AppRootState extends State<AppRoot> {
   late EntryService entryService;
+  late FeedbackService feedbackService;
   late UserSettingRepository userSettingRepository;
   late DailyStateRepository dailyStateRepository;
   late InitialSetupService initialSetupService;
@@ -93,6 +97,7 @@ class _AppRootState extends State<AppRoot> {
     initialSetupService = InitialSetupService(userSettingRepository);
     final appStartService = AppStartService(userSettingRepository);
     final stateJudgeService = StateJudgeService(dailyStateRepository);
+    feedbackService = FeedbackService(dailyStateRepository, stateJudgeService);
 
     entryService = EntryService(
       userSettingRepository: userSettingRepository,
@@ -137,7 +142,15 @@ class _AppRootState extends State<AppRoot> {
         return const MessagePage(message: 'まだまだ頑張りましょう！');
 
       case AppState.waitingFeedback:
-        return FeedbackPage(onFeedbackSubmitted: () {});
+        return FeedbackPage(
+          onFeedbackSubmitted: (FeedbackType type) async {
+            await feedbackService.submitFeedback(type);
+            final state = await feedbackService.completeFeedback();
+            setState(() {
+              _appState = state;
+            });
+          },
+        );
 
       case AppState.completed:
         return const MessagePage(message: '今日もお疲れさまでした');

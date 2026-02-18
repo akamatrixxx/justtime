@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/repository/daily_state_repository.dart';
-import 'app_state.dart';
+import '../../data/model/app_state.dart';
 
 class StateJudgeService {
   final DailyStateRepository repository;

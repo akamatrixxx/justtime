@@ -6,7 +6,7 @@ import '../../data/model/daily_state.dart';
 import '../../data/repository/user_setting_repository.dart';
 import '../../data/repository/daily_state_repository.dart';
 import '../state/state_judge_service.dart';
-import '../state/app_state.dart';
+import '../../data/model/app_state.dart';
 import '../notification_time/notification_time_service.dart';
 
 class AppStartService {
@@ -53,6 +53,7 @@ class AppStartService {
         date: today,
         notifyTime: TimeOfDay(hour: 20, minute: 0),
         feedbackCompleted: false,
+        feedbackType: null,
       );
       await repository.save(newState);
       // ③ 最終利用日更新
@@ -69,6 +70,7 @@ class AppStartService {
         date: today,
         notifyTime: yesterdayState.notifyTime,
         feedbackCompleted: false,
+        feedbackType: null,
       );
       await repository.save(newState);
     }

@@ -53,6 +53,7 @@ class InitialSetupService {
       date: today,
       notifyTime: TimeOfDay(hour: midHour, minute: midMinute),
       feedbackCompleted: false,
+      feedbackType: null,
     );
 
     await dailyStateRepository.save(state);

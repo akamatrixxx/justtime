@@ -1,21 +1,31 @@
 import 'package:flutter/material.dart';
+import '../../data/model/feedback.dart';
 
 class FeedbackPage extends StatelessWidget {
-  final VoidCallback onFeedbackSubmitted;
+  final Function(FeedbackType) onFeedbackSubmitted;
 
   const FeedbackPage({super.key, required this.onFeedbackSubmitted});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('フィードバック')),
       body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            // 本来は FB内容を保存する
-            onFeedbackSubmitted();
-          },
-          child: const Text('FBを送信する'),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              onPressed: () => onFeedbackSubmitted(FeedbackType.tooEarly),
+              child: const Text("まだ早いよ"),
+            ),
+            ElevatedButton(
+              onPressed: () => onFeedbackSubmitted(FeedbackType.goodTiming),
+              child: const Text("ありがとう"),
+            ),
+            ElevatedButton(
+              onPressed: () => onFeedbackSubmitted(FeedbackType.tooLate),
+              child: const Text("なんでいまさら"),
+            ),
+          ],
         ),
       ),
     );
