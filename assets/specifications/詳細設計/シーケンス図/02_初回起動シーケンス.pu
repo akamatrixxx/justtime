@@ -1,66 +1,61 @@
 @startuml
-title 初回起動シーケンス（P1 → P3連携版）
+title 初回起動シーケンス（Entry主導）
 
 actor ユーザー
-participant "UI\n(TutorialPage)" as UI
-participant "AppStartService\n(P2)" as P2
+participant "TutorialPage\n(UI)" as UI
+participant "Main\n(AppRoot)" as Main
+participant "EntryService" as Entry
+
 participant "InitialSetupService\n(P1)" as P1
-' participant "StateJudgeService\n(P3)" as P3
-participant "Repository\n(SQLite)" as DB
+participant "StateJudgeService\n(P3)" as P3
+participant "UserSettingRepository" as UserRepo
 participant "OS\n(通知)" as OS_Notify
 participant "OS\n(時刻)" as OS_Time
 
+Entry --> Main : AppState.tutorial
+Main -> UI : TutorialPage表示
 
-P2 -> P1 : InitialSetup()
+== ユーザー入力 ==
 
-== チュートリアル ==
-P1 -> UI : showTutorial()
-UI -> ユーザー : チュートリアル表示
-
-== ユーザー設定入力 ==
 ユーザー -> UI : 終業時間帯入力
 ユーザー -> UI : 就寝時間帯入力
-UI -> P1 : submitUserSettings()
+ユーザー -> UI : 完了ボタン押下
+
+UI -> Main : 完了ボタン押下検知
+Main -> Entry : CompleteTutorial()
+Entry -> P1 : completeInitialSetup()
 
 == 通知許可 ==
+
 P1 -> OS_Notify : 通知許可リクエスト
 OS_Notify --> P1 : 許可 / 不許可
 
-note right
-通知許可の結果は
-状態判定には影響しない
-end note
+== 初期データ生成 ==
 
-== 初期状態データ生成 ==
 P1 -> OS_Time : 現在時刻取得
-OS_Time --> P1 : 現在時刻
+OS_Time --> P1 : now
 
-P1 -> P1 : 初期状態データ生成
+P1 -> P1 : 初回通知時刻算出
 note right
-・当日FB未完了
+終業時間帯の中央値
 end note
-P1 -> P1 : 初回通知時刻算出（終業時間帯の中央値）
 
+P1 -> UserRepo : 初回起動フラグ=false
+P1 -> UserRepo : 終業時間帯保存
+P1 -> UserRepo : 就寝時間帯保存
+P1 -> UserRepo : 当日DailyState生成
+P1 -> UserRepo : FB完了=false
 
-== データ保存 ==
-P1 -> DB : MD_1 初回起動フラグ=OFF
-P1 -> DB : MD_2 終業時間帯
-P1 -> DB : MD_3 就寝時間帯
-P1 -> DB : DD_1 当日通知時刻
-P1 -> DB : DD_2 FB完了フラグ=false
+ == 状態判定 ==
 
-' == 状態判定へ委譲 ==
-' P1 -> P3 : judgeState()
+Entry -> P3 : judgeState()
 
-' P3 -> DB : DD_1 通知時刻
-' P3 -> DB : DD_2 FB完了フラグ
-' P3 -> OS_Time : 現在時刻取得
-' OS_Time --> P3 : 現在時刻
+P3 -> UserRepo : 今日の通知時刻取得
+P3 -> UserRepo : FB完了フラグ取得
+P3 -> OS_Time : 現在時刻取得
+P3 -> P3 : 状態決定(S1/S2/S3)
 
-' P3 -> P3 : 状態判定(S1/S2/S3)
-
-' == メッセージ表示 ==
-' P3 -> UI : showMessageByState()
-' UI -> ユーザー : 状態別メッセージ表示
+P3 --> Entry : AppState
+Entry --> Main : AppState
 
 @enduml

@@ -16,6 +16,10 @@ class StateJudgeService {
 
     final dailyState = await repository.getByDate(today);
 
+    debugPrint('[P3] 今の時刻: $now');
+    debugPrint('[P3] 通知時刻: ${dailyState?.notifyTime}');
+    debugPrint('[P3] フィードバック完了: ${dailyState?.feedbackCompleted}');
+
     if (dailyState == null) {
       return AppState.beforeNotification;
     }

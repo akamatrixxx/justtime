@@ -38,13 +38,31 @@ class AppRoot extends StatefulWidget {
 }
 
 class EntryService {
+  final UserSettingRepository userSettingRepository;
   final AppStartService appStartService;
   final StateJudgeService stateJudgeService;
 
-  EntryService(this.appStartService, this.stateJudgeService);
+  EntryService({
+    required this.userSettingRepository,
+    required this.appStartService,
+    required this.stateJudgeService,
+  });
 
+  /// アプリ起動時
   Future<AppState> onAppStart() async {
-    await appStartService.handleAppStart();
+    final isFirstLaunch = await userSettingRepository.isFirstLaunch();
+
+    if (isFirstLaunch) {
+      return AppState.tutorial;
+    }
+
+    await appStartService.handleDateChange();
+    return await stateJudgeService.judgeState();
+  }
+
+  /// チュートリアル完了時
+  Future<AppState> completeTutorial() async {
+    // 初期設定完了後、通常フローへ
     return await stateJudgeService.judgeState();
   }
 }
@@ -56,7 +74,6 @@ class _AppRootState extends State<AppRoot> {
   late InitialSetupService initialSetupService;
 
   AppState? _appState;
-  bool _needTutorial = false;
 
   @override
   void initState() {
@@ -73,16 +90,15 @@ class _AppRootState extends State<AppRoot> {
     dailyStateRepository = DailyStateRepository(AppDatabase.database);
 
     // 各サービスを作成
-    final appStartService = AppStartService(
-      userSettingRepository,
-      dailyStateRepository,
-    );
-
+    initialSetupService = InitialSetupService(userSettingRepository);
+    final appStartService = AppStartService(userSettingRepository);
     final stateJudgeService = StateJudgeService(dailyStateRepository);
 
-    initialSetupService = InitialSetupService(userSettingRepository);
-
-    entryService = EntryService(appStartService, stateJudgeService);
+    entryService = EntryService(
+      userSettingRepository: userSettingRepository,
+      appStartService: appStartService,
+      stateJudgeService: stateJudgeService,
+    );
   }
 
   /// アプリ起動時の処理
@@ -97,28 +113,26 @@ class _AppRootState extends State<AppRoot> {
     await dailyStateRepository.debugPrintAll();
   }
 
-  /// [暫定]チュートリアル完了を通知
-  Future<void> _onTutorialCompleted() async {
-    await userSettingRepository.markFirstLaunchCompleted();
-  }
-
   @override
   Widget build(BuildContext context) {
     // 🔵 起動中
-    if (_needTutorial == false && _appState == null) {
+    if (_appState == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    // 🔵 チュートリアル
-    if (_needTutorial) {
-      return TutorialPage(
-        onCompleted: _onTutorialCompleted,
-        initialSetupService: initialSetupService,
-      );
     }
 
     // 🔵 状態別画面
     switch (_appState!) {
+      case AppState.tutorial:
+        return TutorialPage(
+          onCompleted: () {
+            entryService.completeTutorial().then((state) {
+              setState(() {
+                _appState = state;
+              });
+            });
+          },
+          initialSetupService: initialSetupService,
+        );
       case AppState.beforeNotification:
         return const MessagePage(message: 'まだまだ頑張りましょう！');
 

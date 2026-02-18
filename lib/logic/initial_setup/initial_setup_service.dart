@@ -21,7 +21,20 @@ class InitialSetupService {
     required int sleepEndHour,
     required int sleepEndMinute,
   }) async {
+    // [未対応] 通知許可リクエスト
+
+    // 現在時刻取得
     final today = DateTime.now();
+
+    // 初回通知時刻算出（就業時間帯中央値）
+    final start = workStartHour * 60 + workStartMinute;
+    final end = workEndHour * 60 + workEndMinute;
+    final mid = (start + end) ~/ 2;
+
+    final midHour = mid ~/ 60;
+    final midMinute = mid % 60;
+
+    // ユーザ設定保存
     final setting = UserSetting(
       isFirstLaunch: false,
       lastUsedDate: today,
@@ -37,14 +50,7 @@ class InitialSetupService {
 
     await userSettingRepository.saveUserSetting(setting);
 
-    // 就業時間帯中央値
-    final start = workStartHour * 60 + workStartMinute;
-    final end = workEndHour * 60 + workEndMinute;
-    final mid = (start + end) ~/ 2;
-
-    final midHour = mid ~/ 60;
-    final midMinute = mid % 60;
-
+    // 当日DailyState生成
     final state = DailyState(
       date: today,
       notifyTime: DateTime(
@@ -58,12 +64,6 @@ class InitialSetupService {
     );
 
     await dailyStateRepository.save(state);
-
-    log(
-      '初回通知時刻: '
-      '${midHour.toString().padLeft(2, '0')}:'
-      '${midMinute.toString().padLeft(2, '0')}',
-    );
 
     debugPrint('=== Initial Setup ===');
     debugPrint(

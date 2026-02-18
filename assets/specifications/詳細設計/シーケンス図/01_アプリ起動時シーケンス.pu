@@ -1,82 +1,60 @@
 @startuml
-title 1日の処理シーケンス（初回起動分岐あり）
+title アプリ起動シーケンス（初回判定はEntryService）
 
 actor ユーザー
-participant "main / AppRootWidget" as Main
-participant "onAppStart()" as Entry
-participant "AppStartService\n(P2)" as P2
-participant "InitialSetupService\n(P1)" as P1
-participant "StateJudgeService\n(P3)" as P3
-participant "FeedbackService\n(P4)" as P4
-participant "NotificationTimeService\n(P5)" as P5
-' participant "NotificationService\n(P6)" as P6
-database "Repository\n(SQLite)" as DB
-participant "OS\n(時刻)" as OS_Time
-' participant "OS\n(通知)" as OS_Notify
-participant "UI\n(Page)" as UI
+participant "Main\n(AppRoot)" as Main
+participant "EntryService" as Entry
 
-== アプリ起動 ==
+participant "AppStartService\n(P2)" as P2
+participant "StateJudgeService\n(P3)" as P3
+participant "UserSettingRepository" as UserRepo
+participant "OS\n(時刻)" as OS_Time
+
 ユーザー -> Main : アプリ起動
 Main -> Entry : onAppStart()
 
-== 起動時判定（P2） ==
-Entry -> P2 : handleAppStart()
+== 初回判定 ==
 
-P2 -> DB : 初回起動フラグ取得
-DB --> P2 : 初回起動フラグ
+Entry -> UserRepo : 初回起動フラグ取得
+UserRepo --> Entry : isFirstLaunch
 
-alt 初回起動フラグ == false（初回起動）
-  P2 -> P1 : InitialSetup()
-  note right
-  初回起動シーケンスへ
-  end note
-end
-  P2 -> OS_Time : 現在時刻取得
-  P2 -> DB : 最終利用日取得
-  P2 -> P2 : 日付変更判定
-
-  alt 日付変更あり
-    P2 -> P2 : DateChangeProcess()
+alt 初回起動 == true
+    Entry --> Main : AppState.tutorial
     note right
-    日付変更時シーケンスへ
+    初回起動シーケンスへ
     end note
-  end
+else 初回起動 == false
 
+    == 日付変更処理 ==
 
-== 状態判定（P3） ==
-Entry -> P3 : judgeState()
+    Entry -> P2 : handleDateChange()
 
-P3 -> DB : 通知時刻取得
-P3 -> DB : FB完了フラグ取得
-P3 -> OS_Time : 現在時刻取得
-P3 -> P3 : 状態決定(S1/S2/S3)
-P3 --> Entry : 状態
-Entry --> Main : 状態
+    P2 -> OS_Time : 現在時刻取得
+    OS_Time --> P2 : now
 
-== UI分岐 ==
-alt S1/S3
-  Main -> UI : showMessage(S1/S3)
+    P2 -> UserRepo : 最終利用日取得
+    UserRepo --> P2 : lastUsed
 
-else S2
-  Main -> UI : showFeedbackUI()
-  ユーザー -> UI : FB入力
-  UI -> P4 : submitFeedback()
+    P2 -> P2 : 日付変更判定
 
-  P4 -> DB : FB履歴保存
-  P4 -> DB : FB完了フラグ更新
-  P4 -> DB : 最終利用日 = 現在日付
+    alt 日付変更あり
+        P2 -> P2 : DateChangeProcess()
+    end
 
-  P4 -> P5 : calcNotificationTime()
-  note right
-  通知時間算出シーケンスへ
-  end note
-  ' P5 -> DB : 翌日通知時刻保存
-  ' P5 -> P6 : registerNotification()
-  ' P6 -> OS_Notify : 通知スケジュール
+    P2 -> UserRepo : 最終利用日更新
+    P2 --> Entry : 完了
 
-  P4 -> P3 : judgeState()
-  P3 --> Entry : S3
-  Main -> UI : showMessage(S3)
+    == 状態判定 ==
+
+    Entry -> P3 : judgeState()
+
+    P3 -> UserRepo : 今日の通知時刻取得
+    P3 -> UserRepo : FB完了フラグ取得
+    P3 -> OS_Time : 現在時刻取得
+    P3 -> P3 : 状態決定(S1/S2/S3)
+
+    P3 --> Entry : AppState
+    Entry --> Main : AppState
 end
 
 @enduml
