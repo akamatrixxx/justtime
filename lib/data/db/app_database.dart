@@ -16,7 +16,7 @@ class AppDatabase {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: (db, version) async {
         // user_setting テーブル
         await db.execute('''
@@ -39,7 +39,8 @@ class AppDatabase {
         await db.execute('''
           CREATE TABLE daily_state(
             date TEXT PRIMARY KEY,
-            notify_time TEXT,
+            notify_hour INTEGER,
+            notify_minute INTEGER,
             feedback_completed INTEGER
           )
         ''');
@@ -47,20 +48,14 @@ class AppDatabase {
 
       // 🔵 既存ユーザー用アップグレード処理
       onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
+        if (oldVersion < 4) {
           await db.execute('''
             CREATE TABLE daily_state(
               date TEXT PRIMARY KEY,
-              notify_time TEXT,
+              notify_hour INTEGER,
+              notify_minute INTEGER,
               feedback_completed INTEGER
             )
-          ''');
-        }
-
-        if (oldVersion < 3) {
-          await db.execute('''
-            ALTER TABLE user_setting
-            ADD COLUMN last_used_date TEXT
           ''');
         }
       },

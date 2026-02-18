@@ -1,6 +1,8 @@
+import 'package:flutter/material.dart';
+
 class DailyState {
   final DateTime date;
-  final DateTime notifyTime;
+  final TimeOfDay notifyTime;
   final bool feedbackCompleted;
 
   DailyState({
@@ -12,7 +14,8 @@ class DailyState {
   Map<String, dynamic> toMap() {
     return {
       'date': date.toIso8601String().split('T').first,
-      'notify_time': notifyTime.toIso8601String(),
+      'notify_hour': notifyTime.hour,
+      'notify_minute': notifyTime.minute,
       'feedback_completed': feedbackCompleted ? 1 : 0,
     };
   }
@@ -20,7 +23,10 @@ class DailyState {
   factory DailyState.fromMap(Map<String, dynamic> map) {
     return DailyState(
       date: DateTime.parse(map['date']),
-      notifyTime: DateTime.parse(map['notify_time']),
+      notifyTime: TimeOfDay(
+        hour: map['notify_hour'],
+        minute: map['notify_minute'],
+      ),
       feedbackCompleted: map['feedback_completed'] == 1,
     );
   }

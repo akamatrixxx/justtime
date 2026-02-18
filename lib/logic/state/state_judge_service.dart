@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 import '../../data/repository/daily_state_repository.dart';
 import 'app_state.dart';
@@ -25,16 +26,29 @@ class StateJudgeService {
     }
 
     /// 通知前：フィードバック未完了かつ通知時刻前
-    if (!dailyState.feedbackCompleted && now.isBefore(dailyState.notifyTime)) {
+    if (!dailyState.feedbackCompleted &&
+        _isBeforeNotification(now, dailyState.notifyTime)) {
       return AppState.beforeNotification;
     }
 
     /// FB待ち状態：フィードバック未完了かつ通知時刻後
-    if (!dailyState.feedbackCompleted && now.isAfter(dailyState.notifyTime)) {
+    if (!dailyState.feedbackCompleted &&
+        !_isBeforeNotification(now, dailyState.notifyTime)) {
       return AppState.waitingFeedback;
     }
 
     /// 完了状態：フィードバック完了
     return AppState.completed;
+  }
+
+  bool _isBeforeNotification(DateTime now, TimeOfDay notifyTime) {
+    final notifyDateTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      notifyTime.hour,
+      notifyTime.minute,
+    );
+    return now.isBefore(notifyDateTime);
   }
 }

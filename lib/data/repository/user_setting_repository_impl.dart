@@ -79,7 +79,7 @@ class UserSettingRepositoryImpl implements UserSettingRepository {
 
     await db.update(
       'user_setting',
-      {'last_used_date': date.toIso8601String()},
+      {'last_used_date': date.toIso8601String().split('T').first},
       where: 'id = ?',
       whereArgs: [1],
     );

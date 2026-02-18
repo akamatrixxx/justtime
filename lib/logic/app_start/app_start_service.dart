@@ -51,7 +51,7 @@ class AppStartService {
     if (yesterdayState == null) {
       newState = DailyState(
         date: today,
-        notifyTime: DateTime(today.year, today.month, today.day, 20, 0),
+        notifyTime: TimeOfDay(hour: 20, minute: 0),
         feedbackCompleted: false,
       );
       await repository.save(newState);
@@ -67,7 +67,7 @@ class AppStartService {
 
       newState = DailyState(
         date: today,
-        notifyTime: yesterdayState.notifyTime.add(const Duration(days: 1)),
+        notifyTime: yesterdayState.notifyTime,
         feedbackCompleted: false,
       );
       await repository.save(newState);

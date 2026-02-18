@@ -28,7 +28,7 @@ class UserSetting {
   Map<String, dynamic> toMap() {
     return {
       'is_first_launch': isFirstLaunch ? 1 : 0,
-      'last_used_date': lastUsedDate?.toIso8601String(),
+      'last_used_date': lastUsedDate?.toIso8601String().split('T').first,
       'work_start_hour': workStartHour,
       'work_start_minute': workStartMinute,
       'work_end_hour': workEndHour,
