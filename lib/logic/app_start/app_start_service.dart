@@ -23,13 +23,16 @@ class AppStartService {
 
     if (_isDateChanged(lastUsed, now)) {
       await _processDateChange(now);
+      debugPrint('Update LastUsedDate: ${now.month}/${now.day}');
+      await userSettingRepository.setLastUsedDate(now);
     }
-
-    await userSettingRepository.setLastUsedDate(now);
   }
 
   bool _isDateChanged(DateTime? lastUsed, DateTime now) {
     if (lastUsed == null) return true;
+    debugPrint(
+      'LastUsedDay: ${lastUsed.month}/${lastUsed.day}, Today: ${now.month}/${now.day}',
+    );
 
     return lastUsed.year != now.year ||
         lastUsed.month != now.month ||
@@ -37,7 +40,7 @@ class AppStartService {
   }
 
   Future<void> _processDateChange(DateTime now) async {
-    debugPrint('[P2] ===== Date Changed Detected =====');
+    debugPrint('[P2] ===== Date Changed Process =====');
     final yesterday = DateTime(
       now.year,
       now.month,

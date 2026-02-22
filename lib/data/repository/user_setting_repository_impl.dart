@@ -93,12 +93,33 @@ class UserSettingRepositoryImpl implements UserSettingRepository {
     final result = await db.query('user_setting');
 
     if (result.isEmpty) {
-      debugPrint('🔴 user_setting: データなし');
+      debugPrint('user_setting: データなし');
       return;
     }
 
-    debugPrint('🟢 user_setting 内容:');
-    debugPrint(result.first.toString());
+    debugPrint('[user_setting]');
+    final row = result.first;
+
+    final isFirstLaunch = row['is_first_launch'] == 1;
+    final lastUsedDate = row['last_used_date'] as String?;
+
+    String fmtTime(String hourKey, String minuteKey) {
+      final hour = row[hourKey];
+      final minute = row[minuteKey];
+      if (hour == null || minute == null) return 'null';
+      return 'TimeOfDay(hour: $hour, minute: $minute)';
+    }
+
+    debugPrint('-isFirstLaunch: $isFirstLaunch,');
+    debugPrint('-lastUsedDate: ${lastUsedDate ?? 'null'},');
+    debugPrint(
+      '-workStart: ${fmtTime('work_start_hour', 'work_start_minute')},',
+    );
+    debugPrint('-workEnd: ${fmtTime('work_end_hour', 'work_end_minute')},');
+    debugPrint(
+      '-sleepStart: ${fmtTime('sleep_start_hour', 'sleep_start_minute')},',
+    );
+    debugPrint('-sleepEnd: ${fmtTime('sleep_end_hour', 'sleep_end_minute')},');
   }
 }
 

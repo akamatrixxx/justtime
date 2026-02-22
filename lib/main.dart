@@ -53,6 +53,7 @@ class EntryService {
 
   /// アプリ起動時
   Future<AppState> onAppStart() async {
+    debugPrint('[EntryService] onAppStart');
     final isFirstLaunch = await userSettingRepository.isFirstLaunch();
 
     if (isFirstLaunch) {
@@ -113,6 +114,7 @@ class _AppRootState extends State<AppRoot> {
   /// アプリ起動時の処理
   Future<void> _startApp() async {
     final state = await entryService.onAppStart();
+    debugPrint('[EntryService] AppState: $state');
 
     setState(() {
       _appState = state;
