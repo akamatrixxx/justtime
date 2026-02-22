@@ -97,7 +97,11 @@ class _AppRootState extends State<AppRoot> {
     initialSetupService = InitialSetupService(userSettingRepository);
     final appStartService = AppStartService(userSettingRepository);
     final stateJudgeService = StateJudgeService(dailyStateRepository);
-    feedbackService = FeedbackService(dailyStateRepository, stateJudgeService);
+    feedbackService = FeedbackService(
+      dailyStateRepository,
+      stateJudgeService,
+      NotificationTimeService(),
+    );
 
     entryService = EntryService(
       userSettingRepository: userSettingRepository,

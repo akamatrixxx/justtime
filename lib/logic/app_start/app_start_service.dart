@@ -16,6 +16,7 @@ class AppStartService {
 
   /// P2: 起動時処理（状態は返さない）
   Future<void> handleDateChange() async {
+    debugPrint('[P2] ===== handleDateChange =====');
     final now = DateTime.now();
 
     final lastUsed = await userSettingRepository.getLastUsedDate();
@@ -36,6 +37,7 @@ class AppStartService {
   }
 
   Future<void> _processDateChange(DateTime now) async {
+    debugPrint('[P2] ===== Date Changed Detected =====');
     final yesterday = DateTime(
       now.year,
       now.month,
@@ -56,8 +58,7 @@ class AppStartService {
         feedbackType: null,
       );
       await repository.save(newState);
-      // ③ 最終利用日更新
-      await userSettingRepository.setLastUsedDate(now);
+
       return;
     }
 
@@ -74,8 +75,5 @@ class AppStartService {
       );
       await repository.save(newState);
     }
-
-    // ③ 最終利用日更新
-    await userSettingRepository.setLastUsedDate(now);
   }
 }

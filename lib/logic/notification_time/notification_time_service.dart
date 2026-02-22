@@ -1,13 +1,40 @@
+import 'package:flutter/material.dart';
+import '../../data/model/feedback.dart';
+
 class NotificationTimeService {
   /// フィードバック後の次回通知時刻
-  DateTime calcNextTime(DateTime previousNotifyTime) {
-    // 前回より +1時間
-    final next = previousNotifyTime.add(const Duration(hours: 1));
+  TimeOfDay calcNextTime({
+    required TimeOfDay currentNotifyTime,
+    required FeedbackType feedbackType,
+  }) {
+    TimeOfDay adjustedTime = currentNotifyTime;
 
-    return _roundToMinute(next);
+    switch (feedbackType) {
+      case FeedbackType.tooEarly:
+        adjustedTime = _addToTimeOfDay(
+          currentNotifyTime,
+          const Duration(minutes: 30),
+        );
+        break;
+
+      case FeedbackType.tooLate:
+        adjustedTime = _addToTimeOfDay(
+          currentNotifyTime,
+          const Duration(minutes: -30),
+        );
+        break;
+
+      case FeedbackType.goodTiming:
+        break;
+    }
+
+    return adjustedTime;
   }
 
-  DateTime _roundToMinute(DateTime dt) {
-    return DateTime(dt.year, dt.month, dt.day, dt.hour, dt.minute);
+  TimeOfDay _addToTimeOfDay(TimeOfDay time, Duration delta) {
+    final now = DateTime.now();
+    final base = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+    final result = base.add(delta);
+    return TimeOfDay(hour: result.hour, minute: result.minute);
   }
 }
