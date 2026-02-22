@@ -88,6 +88,7 @@ class UserSettingRepositoryImpl implements UserSettingRepository {
   // デバッグ用: user_settingテーブルの内容を表示
   @override
   Future<void> debugPrintUserSetting() async {
+    debugPrint('====[user_setting]====');
     final db = await AppDatabase.database;
 
     final result = await db.query('user_setting');
@@ -97,7 +98,6 @@ class UserSettingRepositoryImpl implements UserSettingRepository {
       return;
     }
 
-    debugPrint('[user_setting]');
     final row = result.first;
 
     final isFirstLaunch = row['is_first_launch'] == 1;
@@ -120,6 +120,7 @@ class UserSettingRepositoryImpl implements UserSettingRepository {
       '-sleepStart: ${fmtTime('sleep_start_hour', 'sleep_start_minute')},',
     );
     debugPrint('-sleepEnd: ${fmtTime('sleep_end_hour', 'sleep_end_minute')},');
+    debugPrint('=====================');
   }
 }
 

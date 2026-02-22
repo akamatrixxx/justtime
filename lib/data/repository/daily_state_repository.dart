@@ -34,8 +34,10 @@ class DailyStateRepository {
   Future<void> debugPrintAll() async {
     final db = await database;
     final result = await db.query('daily_state');
+    debugPrint('====[daily_state dataset]====');
     for (var row in result) {
       debugPrint('ROW: $row');
     }
+    debugPrint('====[end]====');
   }
 }
