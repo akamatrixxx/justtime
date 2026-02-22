@@ -57,7 +57,7 @@ class FeedbackService {
       feedbackType: type,
     );
     debugPrint(
-      '[FeedbackService] Feedback submitted: $type, next day notification: $nextTime',
+      '[FeedbackService] Feedback submitted: $type, next day notification: $nextTime.notifyTime',
     );
     await repository.save(updatedToday);
     await repository.save(nextDayState);

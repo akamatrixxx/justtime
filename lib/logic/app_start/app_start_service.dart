@@ -102,8 +102,11 @@ class AppStartService {
     }
 
     final todayState = await repository.getByDate(today);
-    if (todayState != null && todayState.feedbackCompleted) {
+    if (todayState != null && yesterdayState.feedbackCompleted) {
       /// フィードバック完了 → 通知時刻は作成済みなのでなにもしない
+      debugPrint(
+        'Feedback completed, today state already exists. No action needed.',
+      );
     } else {
       /// フィードバック未完了 → 昨日と同じ通知時刻で新しい状態を作成
       newState = DailyState(
