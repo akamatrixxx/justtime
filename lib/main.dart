@@ -59,9 +59,9 @@ class EntryService {
     required this.stateJudgeService,
   });
 
-  /// アプリ起動時
   Future<AppState> onAppStart() async {
     debugPrint('[EntryService] onAppStart');
+
     final isFirstLaunch = await userSettingRepository.isFirstLaunch();
 
     if (isFirstLaunch) {
@@ -72,14 +72,12 @@ class EntryService {
     return await stateJudgeService.judgeState();
   }
 
-  /// チュートリアル完了時
   Future<AppState> completeTutorial() async {
-    // 初期設定完了後、通常フローへ
     return await stateJudgeService.judgeState();
   }
 }
 
-class _AppRootState extends State<AppRoot> {
+class _AppRootState extends State<AppRoot> with WidgetsBindingObserver {
   late EntryService entryService;
   late FeedbackService feedbackService;
   late UserSettingRepository userSettingRepository;
@@ -87,22 +85,54 @@ class _AppRootState extends State<AppRoot> {
   late InitialSetupService initialSetupService;
 
   AppState? _appState;
+  bool _isProcessingLifecycle = false;
 
   @override
   void initState() {
     super.initState();
 
+    WidgetsBinding.instance.addObserver(this);
+
     _initializeServices();
     _startApp();
   }
 
-  /// サービスの初期化
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // バックグラウンド → 復帰
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _handleResume();
+    }
+  }
+
+  Future<void> _handleResume() async {
+    if (_isProcessingLifecycle) return;
+
+    _isProcessingLifecycle = true;
+    debugPrint('[Lifecycle] App Resumed');
+
+    final state = await entryService.onAppStart();
+
+    if (mounted) {
+      setState(() {
+        _appState = state;
+      });
+    }
+
+    _isProcessingLifecycle = false;
+  }
+
+  /// サービス初期化
   void _initializeServices() {
-    // リポジトリを初期化
     userSettingRepository = UserSettingRepositoryImpl();
     dailyStateRepository = DailyStateRepository(AppDatabase.database);
 
-    // 各サービスを作成
     final notificationService = NotificationService();
     final notificationTimeService = NotificationTimeService(
       notificationService,
@@ -112,11 +142,14 @@ class _AppRootState extends State<AppRoot> {
       userSettingRepository,
       notificationService,
     );
+
     final appStartService = AppStartService(
       userSettingRepository,
       notificationTimeService,
     );
+
     final stateJudgeService = StateJudgeService(dailyStateRepository);
+
     feedbackService = FeedbackService(
       dailyStateRepository,
       stateJudgeService,
@@ -130,14 +163,15 @@ class _AppRootState extends State<AppRoot> {
     );
   }
 
-  /// アプリ起動時の処理
+  /// 🔵 初回起動時処理
   Future<void> _startApp() async {
     final state = await entryService.onAppStart();
-    debugPrint('[EntryService] AppState: $state');
 
-    setState(() {
-      _appState = state;
-    });
+    if (mounted) {
+      setState(() {
+        _appState = state;
+      });
+    }
 
     await userSettingRepository.debugPrintUserSetting();
     await dailyStateRepository.debugPrintAll();
@@ -145,12 +179,10 @@ class _AppRootState extends State<AppRoot> {
 
   @override
   Widget build(BuildContext context) {
-    // 🔵 起動中
     if (_appState == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // 🔵 状態別画面
     switch (_appState!) {
       case AppState.tutorial:
         return TutorialPage(
@@ -163,6 +195,7 @@ class _AppRootState extends State<AppRoot> {
           },
           initialSetupService: initialSetupService,
         );
+
       case AppState.beforeNotification:
         return const MessagePage(message: 'まだまだ頑張りましょう！');
 
