@@ -6,11 +6,18 @@ import '../../data/repository/user_setting_repository.dart';
 import '../../data/model/daily_state.dart';
 import '../../data/repository/daily_state_repository.dart';
 import '../../data/db/app_database.dart';
+import '../notification_service/notification_service.dart';
 
 class InitialSetupService {
   final UserSettingRepository userSettingRepository;
-  InitialSetupService(this.userSettingRepository);
+  InitialSetupService(this.userSettingRepository, this.notificationService);
   final dailyStateRepository = DailyStateRepository(AppDatabase.database);
+  final NotificationService notificationService;
+
+  Future<void> runInitialSetup() async {
+    await notificationService.init();
+    await notificationService.requestPermission();
+  }
 
   Future<void> completeInitialSetup({
     required int workStartHour,
@@ -23,7 +30,8 @@ class InitialSetupService {
     required int sleepEndMinute,
   }) async {
     debugPrint('[P1] === Completing Initial Setup ===');
-    // [未対応] 通知許可リクエスト
+    // 通知許可リクエスト
+    runInitialSetup();
 
     // 現在時刻取得
     final today = DateTime.now();
@@ -57,6 +65,9 @@ class InitialSetupService {
     );
 
     await dailyStateRepository.save(state);
+
+    // 通知スケジュール設定
+    await notificationService.scheduler.scheduleDaily(state.notifyTime);
 
     debugPrint(
       '[P1] Work: ${workStartHour.toString().padLeft(2, '0')}:${workStartMinute.toString().padLeft(2, '0')} - ${workEndHour.toString().padLeft(2, '0')}:${workEndMinute.toString().padLeft(2, '0')}',

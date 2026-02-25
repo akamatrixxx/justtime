@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 import 'logic/app_start/app_start_service.dart';
 import 'logic/state/state_judge_service.dart';
 import 'logic/initial_setup/initial_setup_service.dart';
+import 'logic/notification_service/notification_service.dart';
 import 'logic/notification_time/notification_time_service.dart';
 import 'logic/feedback/feedback_service.dart';
 
@@ -17,7 +20,12 @@ import 'ui/tutorial/tutorial_page.dart';
 import 'ui/message/message_page.dart';
 import 'ui/feedback/feedback_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  tz.initializeTimeZones();
+  tz.setLocalLocation(tz.getLocation('Asia/Tokyo'));
+
   runApp(const JustTimeApp());
 }
 
@@ -95,13 +103,24 @@ class _AppRootState extends State<AppRoot> {
     dailyStateRepository = DailyStateRepository(AppDatabase.database);
 
     // 各サービスを作成
-    initialSetupService = InitialSetupService(userSettingRepository);
-    final appStartService = AppStartService(userSettingRepository);
+    final notificationService = NotificationService();
+    final notificationTimeService = NotificationTimeService(
+      notificationService,
+    );
+
+    initialSetupService = InitialSetupService(
+      userSettingRepository,
+      notificationService,
+    );
+    final appStartService = AppStartService(
+      userSettingRepository,
+      notificationTimeService,
+    );
     final stateJudgeService = StateJudgeService(dailyStateRepository);
     feedbackService = FeedbackService(
       dailyStateRepository,
       stateJudgeService,
-      NotificationTimeService(),
+      notificationTimeService,
     );
 
     entryService = EntryService(

@@ -37,7 +37,7 @@ class FeedbackService {
       today = defaultToday;
     }
 
-    final nextTime = notificationTimeService.calcNextTime(
+    final nextTime = await notificationTimeService.calcNextTime(
       currentNotifyTime: today.notifyTime,
       feedbackType: type,
     );

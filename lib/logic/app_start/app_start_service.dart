@@ -11,8 +11,9 @@ import '../notification_time/notification_time_service.dart';
 
 class AppStartService {
   final UserSettingRepository userSettingRepository;
+  final NotificationTimeService notificationTimeService;
 
-  AppStartService(this.userSettingRepository);
+  AppStartService(this.userSettingRepository, this.notificationTimeService);
 
   /// P2: 起動時処理（状態は返さない）
   Future<void> handleDateChange() async {
@@ -114,6 +115,9 @@ class AppStartService {
         notifyTime: yesterdayState.notifyTime,
         feedbackCompleted: false,
         feedbackType: null,
+      );
+      await notificationTimeService.updateDailyNotification(
+        newState.notifyTime,
       );
       await repository.save(newState);
     }
