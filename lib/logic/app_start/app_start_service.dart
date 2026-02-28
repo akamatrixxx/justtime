@@ -97,6 +97,11 @@ class AppStartService {
         feedbackCompleted: false,
         feedbackType: null,
       );
+
+      // 通知時刻の設定＆データ保存
+      await notificationTimeService.updateDailyNotification(
+        newState.notifyTime,
+      );
       await repository.save(newState);
 
       return;
@@ -116,6 +121,7 @@ class AppStartService {
         feedbackCompleted: false,
         feedbackType: null,
       );
+      // 通知時刻の設定＆データ保存
       await notificationTimeService.updateDailyNotification(
         newState.notifyTime,
       );
