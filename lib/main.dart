@@ -163,7 +163,7 @@ class _AppRootState extends State<AppRoot> with WidgetsBindingObserver {
     );
   }
 
-  /// 🔵 初回起動時処理
+  /// 初回起動時処理
   Future<void> _startApp() async {
     final state = await entryService.onAppStart();
 

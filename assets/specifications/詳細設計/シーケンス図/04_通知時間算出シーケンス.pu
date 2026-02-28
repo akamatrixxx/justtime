@@ -1,13 +1,23 @@
 @startuml
-title 通知時間算出シーケンス（現在実装準拠・簡易版）
+title FeedBack取得時通知時間算出シーケンス
 
+actor ユーザー as User
+participant "FeedbackPage\n(UI)" as UI
+participant "MainAppRoot\n(Main)" as Main 
 participant "FeedbackService\n(P4)" as P4
+participant "StateJudgeService\n(P3)" as P3
 participant "NotificationTimeService\n(P5)" as P5
+participant "NotificationSchedular\n(P6)" as P6
+participant "Repository\n(SQLite)" as DB
+participant "OS\n(通知)" as OS_Notify
 
-== 通知時間算出要求 ==
+UI -> P4 : submitFeedback
+
+== 通知時間算出 ==
+P4 -> DB : 今日の通知時刻取得
+DB --> P4 : currentState
 P4 -> P5 : calcNextTime(currentNotifyTime, feedbackType)
 
-== フィードバック種別判定 ==
 alt feedbackType == tooEarly
   P5 -> P5 : 30分後へ加算
 
@@ -18,7 +28,17 @@ else feedbackType == goodTiming
   P5 -> P5 : 変更なし
 end
 
-== 通知時間返却 ==
 P5 --> P4 : adjustedTime
+
+== 通知スケジュール更新 ==
+P4 -> P6 : scheduleDaily(adjustedTime)
+P6 -> OS_Notify : 通知スケジュール更新
+
+== FeedBack完了動作※要検討 ==
+UI -> P4 : completeFeedback()
+P4 -> P3 : judgeState()
+P3 -> P4 : AppState
+P4 -> UI : AppState
+UI -> Main : SetState(AppState)
 
 @enduml

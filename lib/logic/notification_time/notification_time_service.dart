@@ -12,6 +12,7 @@ class NotificationTimeService {
     required TimeOfDay currentNotifyTime,
     required FeedbackType feedbackType,
   }) async {
+    debugPrint('[P5] ==== calcNextTime ====');
     TimeOfDay adjustedTime = currentNotifyTime;
 
     switch (feedbackType) {

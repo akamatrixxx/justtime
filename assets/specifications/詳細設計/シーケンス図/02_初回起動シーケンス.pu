@@ -45,6 +45,7 @@ P1 -> UserRepo : 終業時間帯保存
 P1 -> UserRepo : 就寝時間帯保存
 P1 -> UserRepo : 当日DailyState生成
 P1 -> UserRepo : FB完了=false
+P1 -> OS_Notify : 通知スケジュール設定
 
  == 状態判定 ==
 

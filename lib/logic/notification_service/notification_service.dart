@@ -75,7 +75,6 @@ class NotificationScheduler {
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
-    debugPrint('tz.local = ${tz.local.name}');
     debugPrint('[NotificationScheduler] Scheduled at $tzDate');
   }
 

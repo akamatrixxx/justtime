@@ -56,19 +56,6 @@ class InitialSetupService {
 
     await userSettingRepository.saveUserSetting(setting);
 
-    // 当日DailyState生成
-    final state = DailyState(
-      date: today,
-      notifyTime: TimeOfDay(hour: midHour, minute: midMinute),
-      feedbackCompleted: false,
-      feedbackType: null,
-    );
-
-    await dailyStateRepository.save(state);
-
-    // 通知スケジュール設定
-    await notificationService.scheduler.scheduleDaily(state.notifyTime);
-
     debugPrint(
       '[P1] Work: ${workStartHour.toString().padLeft(2, '0')}:${workStartMinute.toString().padLeft(2, '0')} - ${workEndHour.toString().padLeft(2, '0')}:${workEndMinute.toString().padLeft(2, '0')}',
     );
@@ -78,5 +65,18 @@ class InitialSetupService {
     debugPrint(
       '[P1] Initial Notification Time: ${midHour.toString().padLeft(2, '0')}:${midMinute.toString().padLeft(2, '0')}',
     );
+
+    // 当日DailyState生成
+    final state = DailyState(
+      date: today,
+      notifyTime: TimeOfDay(hour: midHour, minute: midMinute),
+      feedbackCompleted: false,
+      feedbackType: null,
+    );
+    debugPrint('[P1] Saving DailyState for today: $state');
+    await dailyStateRepository.save(state);
+
+    // 通知スケジュール設定
+    await notificationService.scheduler.scheduleDaily(state.notifyTime);
   }
 }

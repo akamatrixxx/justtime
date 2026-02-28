@@ -18,9 +18,10 @@ class FeedbackService {
   );
 
   Future<void> submitFeedback(FeedbackType type) async {
+    debugPrint('[P4] ==== submitFeedback ====');
     DailyState? today = await repository.getByDate(DateTime.now());
 
-    // データが存在しない場合はデフォルトの状態を作成（通知時刻は 20:00）
+    // [例外処理]データが存在しない場合はデフォルトの状態を作成（通知時刻は 20:00）
     if (today == null) {
       debugPrint(
         '[FeedbackService][ASSERT] No DailyState for today, creating default state.',
@@ -37,6 +38,7 @@ class FeedbackService {
       today = defaultToday;
     }
 
+    // 次回通知時刻算出
     final nextTime = await notificationTimeService.calcNextTime(
       currentNotifyTime: today.notifyTime,
       feedbackType: type,
