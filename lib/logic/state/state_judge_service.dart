@@ -25,6 +25,11 @@ class StateJudgeService {
       return AppState.beforeNotification;
     }
 
+    /// 完了状態：フィードバック完了
+    if (dailyState.feedbackCompleted == true) {
+      return AppState.completed;
+    }
+
     /// 通知前：フィードバック未完了かつ通知時刻前
     if (!dailyState.feedbackCompleted &&
         _isBeforeNotification(now, dailyState.notifyTime)) {
@@ -37,8 +42,9 @@ class StateJudgeService {
       return AppState.waitingFeedback;
     }
 
-    /// 完了状態：フィードバック完了
-    return AppState.completed;
+    /// 例外状態：上記以外の状態（通常は発生しない）
+    debugPrint('[P3][WARN] 例外状態: ${dailyState.toMap()}');
+    return AppState.beforeNotification;
   }
 
   bool _isBeforeNotification(DateTime now, TimeOfDay notifyTime) {

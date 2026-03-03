@@ -115,6 +115,7 @@ class AppStartService {
       );
     } else {
       /// フィードバック未完了 → 昨日と同じ通知時刻で新しい状態を作成
+      /// [ToDo] フィードバックなしの場合の通知時刻算出処理
       newState = DailyState(
         date: today,
         notifyTime: yesterdayState.notifyTime,

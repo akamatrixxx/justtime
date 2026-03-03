@@ -30,19 +30,12 @@ class InitialSetupService {
     required int sleepEndMinute,
   }) async {
     debugPrint('[P1] === Completing Initial Setup ===');
+
     // 通知許可リクエスト
     runInitialSetup();
 
     // 現在時刻取得
     final today = DateTime.now();
-
-    // 初回通知時刻算出（就業時間帯中央値）
-    final start = workStartHour * 60 + workStartMinute;
-    final end = workEndHour * 60 + workEndMinute;
-    final mid = (start + end) ~/ 2;
-
-    final midHour = mid ~/ 60;
-    final midMinute = mid % 60;
 
     // ユーザ設定保存
     final setting = UserSetting(
@@ -53,8 +46,15 @@ class InitialSetupService {
       sleepStart: TimeOfDay(hour: sleepStartHour, minute: sleepStartMinute),
       sleepEnd: TimeOfDay(hour: sleepEndHour, minute: sleepEndMinute),
     );
-
     await userSettingRepository.saveUserSetting(setting);
+
+    // 初回通知時刻算出（就業時間帯中央値）
+    // [ToDo] 初回通知時刻が既に現在時刻を過ぎている場合の対応（当日通知はスキップし、翌日通知時刻を算出するなど）
+    final start = workStartHour * 60 + workStartMinute;
+    final end = workEndHour * 60 + workEndMinute;
+    final mid = (start + end) ~/ 2;
+    final midHour = mid ~/ 60;
+    final midMinute = mid % 60;
 
     debugPrint(
       '[P1] Work: ${workStartHour.toString().padLeft(2, '0')}:${workStartMinute.toString().padLeft(2, '0')} - ${workEndHour.toString().padLeft(2, '0')}:${workEndMinute.toString().padLeft(2, '0')}',

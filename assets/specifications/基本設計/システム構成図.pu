@@ -21,7 +21,7 @@ node "スマートフォン端末" {
 
   node "ローカルデータストア" {
     component "ユーザ設定"
-    component "FB履歴"
+    component "日ごとの状態データ"
   }
 }
 
