@@ -1,5 +1,5 @@
 @startuml
-title 日付変更時 処理シーケンス（通知再計算なし・逆探索方式）
+title 日付変更時 処理シーケンス
 
 participant "EntryService" as Entry
 participant "AppStartService\n(P2)" as P2
@@ -16,30 +16,43 @@ P2 -> P2 : IsDateChanged()
 alt 日付け変更あり
   P2 -> P2 : ProcessDateChange()
   P2 -> DB : 昨日のデータを取得
-    alt 昨日のデータなし
-      P2 -> DB : 最終利用日取得
-      DB --> P2 : lastUsed
-      loop 最新のデータ取得まで
-        P2 -> P2 : searchDate = yesterday - n
-        alt データあり
+  alt 昨日のデータなし
+    P2 -> DB : 最終利用日取得
+    DB --> P2 : lastUsed
+    alt lastUsedあり
+      P2 -> P2 : searchDate = yesterday
+      loop searchDate >= lastUsedDateOnly
         P2 -> DB : getByDate(searchDate)
-        DB --> P2 : lastNotifyTime = found
-        else データなし
-        P2 --> P2 : lastNotifyTime = DefaultTime
-        end // データなし
+        DB --> P2 : s (or null)
+        alt sあり
+          P2 -> P2 : found = s \nbreak
+        else sなし
+          P2 -> P2 : searchDate = searchDate - 1日
+        end
       end
-      P2 -> OS_Notify : 通知スケジュール更新(lastNotifyTime)
-      P2 -> DB : lastNotifyTimeで今日のデータを作成
-    else 昨日のデータあり
-      P2 -> DB : 今日のデータ取得
-      DB --> P2 : todayState       
-      alt todayStateなし = Feedback無し
+      alt foundあり
+        P2 -> P2 : lastNotifyTime = found.notifyTime
+      else foundなし
+        P2 -> P2 : lastNotifyTime = DefaultTime(20:00)
+      end
+    else lastUsedなし
+      P2 -> P2 : lastNotifyTime = DefaultTime(20:00)
+    end
+    P2 -> OS_Notify : 通知スケジュール更新(lastNotifyTime)
+    P2 -> DB : lastNotifyTimeで今日のデータを作成
+    P2 --> P2 : return
+  else 昨日のデータあり
+    P2 -> DB : 今日のデータ取得
+    DB --> P2 : todayState
+    alt todayStateあり and yesterdayState.feedbackCompleted
+      P2 -> P2 : No action (フィードバック完了かつ既に今日のデータあり)
+    else
       P2 -> OS_Notify : 通知スケジュール更新(yesterdayState.NotifyTime)
       P2 -> DB : yesterdayState.NotifyTimeで今日のデータを作成
+    end
   end
 end
 
-end
 
 
 @enduml

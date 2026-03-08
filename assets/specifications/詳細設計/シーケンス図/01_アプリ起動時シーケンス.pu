@@ -1,5 +1,5 @@
 @startuml
-title アプリ起動シーケンス（初回判定はEntryService）
+title アプリ起動シーケンス
 
 actor ユーザー
 participant "Main\n(AppRoot)" as Main
@@ -38,7 +38,7 @@ else 初回起動 == false
     P2 -> P2 : 日付変更判定
 
     alt 日付変更あり
-        P2 -> P2 : DateChangeProcess()
+        P2 -> P2 : processDateChange()
     end
 
     P2 -> UserRepo : 最終利用日更新
@@ -48,11 +48,11 @@ else 初回起動 == false
 
     Entry -> P3 : judgeState()
 
-    P3 -> UserRepo : 今日の通知時刻取得
-    P3 -> UserRepo : FB完了フラグ取得
     P3 -> OS_Time : 現在時刻取得
-    P3 -> P3 : 状態決定(S1/S2/S3)
-
+    OS_Time --> P3 : now
+    P3 -> UserRepo : 今日のデータ取得
+    UserRepo --> P3 : todayState
+    
     P3 --> Entry : AppState
     Entry --> Main : AppState
 end

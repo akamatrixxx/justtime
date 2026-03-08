@@ -1,5 +1,5 @@
 @startuml
-title FeedBack取得時通知時間算出シーケンス
+title 通知時間算出シーケンス（フィードバック完了時）
 
 actor ユーザー as User
 participant "FeedbackPage\n(UI)" as UI

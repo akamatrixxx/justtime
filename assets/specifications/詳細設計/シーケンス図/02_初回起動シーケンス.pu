@@ -40,21 +40,20 @@ note right
 終業時間帯の中央値
 end note
 
-P1 -> UserRepo : 初回起動フラグ=false
-P1 -> UserRepo : 終業時間帯保存
-P1 -> UserRepo : 就寝時間帯保存
+P1 -> UserRepo : ユーザー設定保存
+
 P1 -> UserRepo : 当日DailyState生成
-P1 -> UserRepo : FB完了=false
+
 P1 -> OS_Notify : 通知スケジュール設定
 
  == 状態判定 ==
 
 Entry -> P3 : judgeState()
 
-P3 -> UserRepo : 今日の通知時刻取得
-P3 -> UserRepo : FB完了フラグ取得
 P3 -> OS_Time : 現在時刻取得
-P3 -> P3 : 状態決定(S1/S2/S3)
+OS_Time --> P3 : now
+P3 -> UserRepo : 今日のデータ取得
+UserRepo --> P3 : todayState
 
 P3 --> Entry : AppState
 Entry --> Main : AppState
