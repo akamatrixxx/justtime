@@ -10,9 +10,13 @@ rectangle P4 as "P4_FB入力処理" {
 
   rectangle P4_1 as "P4-1_FB入力受付"
   rectangle P4_2 as "P4-2_FB完了判定"
-  rectangle P4_3 as "P4-3_FB結果保存"
+  rectangle P4_3 as "P4-3_翌日データ生成"
+  rectangle P4_4 as "P4-4_当日結果更新"
 
 }
+
+rectangle P5 as "P5_通知時刻算出処理"
+rectangle P6 as "P6_通知管理処理"
 
 ' ===== ユーザー入力 =====
 ユーザー --> P4_1 : FB選択内容\n調整時間入力(必要時)
@@ -20,9 +24,15 @@ rectangle P4 as "P4_FB入力処理" {
 ' ===== プロセス間連携 =====
 P4_1 --> P4_2 : FB入力内容
 P4_2 --> P4_3 : FB入力内容
-
+P4_2 --> P4_4 : FB入力内容
+P4_3 -[dotted]-> P5 : 当日通知時刻/FB入力内容
+P5 -> P4_3 : 通知時刻
+P4_3 --> P6 : 通知時刻
 ' ===== データストア =====
-P4_3 --> DB : DD_2:FB完了フラグ更新\nDD_3:FB履歴保存
+P4_3 --> DB : DD:日別データ(翌日)
+P4_4 --> DB : DD:日別データ(当日)
 
+
+DB -[dotted]-> P4_3 : DD:日別データ(当日)
 
 @enduml

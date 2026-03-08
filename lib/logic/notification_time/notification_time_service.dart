@@ -33,10 +33,29 @@ class NotificationTimeService {
       case FeedbackType.goodTiming:
         break;
     }
-    // スケジュールを更新
+    //[TODO] スケジュールを更新(呼び元の責務で行う)
     await notificationService.scheduler.scheduleDaily(adjustedTime);
 
     return adjustedTime;
+  }
+
+  /// 初回通知時刻算出
+  /// [ToDo] 初回通知時刻が既に現在時刻を過ぎている場合の対応（当日通知はスキップし、翌日通知時刻を算出するなど）
+  TimeOfDay calcInitialNotifyTime({
+    required TimeOfDay workStart,
+    required TimeOfDay workEnd,
+  }) {
+    final start = workStart.hour * 60 + workStart.minute;
+    final end = workEnd.hour * 60 + workEnd.minute;
+    final mid = (start + end) ~/ 2;
+    final midHour = mid ~/ 60;
+    final midMinute = mid % 60;
+
+    debugPrint(
+      '[P5] Initial Notification Time: ${midHour.toString().padLeft(2, '0')}:${midMinute.toString().padLeft(2, '0')}',
+    );
+
+    return TimeOfDay(hour: midHour, minute: midMinute);
   }
 
   TimeOfDay _addToTimeOfDay(TimeOfDay time, Duration delta) {
@@ -46,6 +65,7 @@ class NotificationTimeService {
     return TimeOfDay(hour: result.hour, minute: result.minute);
   }
 
+  //[TODO] スケジュールを更新(呼び元の責務で行う)
   Future<void> updateDailyNotification(TimeOfDay time) async {
     await notificationService.scheduler.scheduleDaily(time);
   }

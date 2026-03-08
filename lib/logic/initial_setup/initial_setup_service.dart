@@ -7,6 +7,7 @@ import '../../data/model/daily_state.dart';
 import '../../data/repository/daily_state_repository.dart';
 import '../../data/db/app_database.dart';
 import '../notification_service/notification_service.dart';
+import '../notification_time/notification_time_service.dart';
 
 class InitialSetupService {
   final UserSettingRepository userSettingRepository;
@@ -48,13 +49,14 @@ class InitialSetupService {
     );
     await userSettingRepository.saveUserSetting(setting);
 
-    // 初回通知時刻算出（就業時間帯中央値）
-    // [ToDo] 初回通知時刻が既に現在時刻を過ぎている場合の対応（当日通知はスキップし、翌日通知時刻を算出するなど）
-    final start = workStartHour * 60 + workStartMinute;
-    final end = workEndHour * 60 + workEndMinute;
-    final mid = (start + end) ~/ 2;
-    final midHour = mid ~/ 60;
-    final midMinute = mid % 60;
+    // 初回通知時刻算出（就業時間帯中央値）をNotificationTimeServiceへ移譲
+    final notificationTimeService = NotificationTimeService(
+      notificationService,
+    );
+    final initialNotifyTime = notificationTimeService.calcInitialNotifyTime(
+      workStart: TimeOfDay(hour: workStartHour, minute: workStartMinute),
+      workEnd: TimeOfDay(hour: workEndHour, minute: workEndMinute),
+    );
 
     debugPrint(
       '[P1] Work: ${workStartHour.toString().padLeft(2, '0')}:${workStartMinute.toString().padLeft(2, '0')} - ${workEndHour.toString().padLeft(2, '0')}:${workEndMinute.toString().padLeft(2, '0')}',
@@ -63,13 +65,13 @@ class InitialSetupService {
       '[P1] Sleep: ${sleepStartHour.toString().padLeft(2, '0')}:${sleepStartMinute.toString().padLeft(2, '0')} - ${sleepEndHour.toString().padLeft(2, '0')}:${sleepEndMinute.toString().padLeft(2, '0')}',
     );
     debugPrint(
-      '[P1] Initial Notification Time: ${midHour.toString().padLeft(2, '0')}:${midMinute.toString().padLeft(2, '0')}',
+      '[P1] Initial Notification Time: ${initialNotifyTime.hour.toString().padLeft(2, '0')}:${initialNotifyTime.minute.toString().padLeft(2, '0')}',
     );
 
     // 当日DailyState生成
     final state = DailyState(
       date: today,
-      notifyTime: TimeOfDay(hour: midHour, minute: midMinute),
+      notifyTime: initialNotifyTime,
       feedbackCompleted: false,
       feedbackType: null,
     );

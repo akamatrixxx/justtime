@@ -5,8 +5,9 @@ title DFDレベル2（P3_状態判定処理）
 
 database "データストア" as DB
 database "状態" as State
+node "モバイルOS\n(時刻)" as OS
 
-rectangle P2 as "P2_アプリ起動時判定処理"
+' rectangle P2 as "P2_アプリ起動時判定処理"
 
 rectangle P3 as "P3_状態判定処理\n(S1/S2/S3)" {
 ' --- 下位プロセス ---
@@ -16,9 +17,9 @@ rectangle P3_3 as "P3-3_状態決定"
 
 }
 ' --- 入力 ---
-DB --> P3_1 : DD_2:FB完了フラグ
-DB --> P3_2 : DD_1:通知時刻
-P2 --> P3_2 : 現在時刻
+DB -[dotted]-> P3_1 : DD:日別データ(当日)
+DB -[dotted]-> P3_2 : DD:日別データ(当日)
+OS -[dotted]-> P3_2 : 現在時刻
 
 ' --- プロセス間 ---
 P3_1 --> P3_3 : FB完了有無
