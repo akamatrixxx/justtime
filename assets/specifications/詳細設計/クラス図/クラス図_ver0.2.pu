@@ -1,0 +1,174 @@
+@startuml
+title JustTime クラス図
+
+' Main クラス'
+' class JustTimeApp {
+' 	+build(context)
+' }
+
+' class AppRoot {
+' 	+createState()
+' }
+
+' class _AppRootState {
+' 	+initState()
+' 	+dispose()
+' 	+didChangeAppLifecycleState(state)
+' 	+_initializeServices()
+' 	- _startApp()
+'     - _handleResume()
+' 	+build(context)
+' }
+
+' 主要クラス'
+class EntryService {
+    userSettingRepository: UserSettingRepository
+    appStartService: AppStartService
+	+ onAppStart(): Future<AppState>
+	+ completeTutorial(): Future<AppState>
+}
+
+class AppStartService {
+    userSettingRepository: UserSettingRepository
+	stateJudgeService: StateJudgeService
+	handleDateChange: HandleDateChange
+	- _isDateChanged(lastUsed, now): bool
+}
+
+class HandleDateChange {
+	userSettingRepository: UserSettingRepository
+	dailyStateRepository: DailyStateRepository
+	notificationService: NotificationService
+	notificationTimeService: NotificationTimeService
+	+ handleDateChange(): Future<void>
+	- _processDateChange(now): Future<void>
+}
+
+class InitialSetupService {
+    userSettingRepository: UserSettingRepository
+    dailyStateRepository: DailyStateRepository
+    notificationService: NotificationService
+	notificationTimeService: NotificationTimeService
+    + completeInitialSetup(...): Future<void>
+	- _runInitialSetup(): Future<void>
+}
+
+class StateJudgeService {
+    repository : DailyStateRepository
+	+ judgeState(): Future<AppState>
+	- _isBeforeNotification(now, notifyTime): bool
+}
+
+class FeedbackService {
+    dailyStateRepository: DailyStateRepository
+	notificationService: NotificationService
+    notificationTimeService: NotificationTimeService
+	+submitFeedback(type): Future<void>
+	+completeFeedback(): Future<AppState>
+}
+
+class NotificationTimeService {
+    notificationService: NotificationService
+	+calcNextTime(currentNotifyTime, feedbackType): Future<TimeOfDay>
+	+calcInitialNotifyTime(workStart, workEnd): TimeOfDay
+	+updateDailyNotification(time): Future<void>
+}
+
+class NotificationService {
+    _plugin: FlutterLocalNotificationsPlugin
+    _initiialized: bool
+	+init(): Future<void>
+	+requestPermission(): Future<void>
+	+scheduler: NotificationScheduler (getter)
+}
+
+class NotificationScheduler {
+    _plugin : FlutterLocalNotificationsPlugin
+	+scheduleDaily(time): Future<void>
+	+cancelAll(): Future<void>
+}
+
+' EntryService --> UserSettingRepository
+EntryService --> AppStartService
+' EntryService --> StateJudgeService
+
+' AppStartService --> UserSettingRepository
+AppStartService --> HandleDateChange
+AppStartService --> StateJudgeService
+
+HandleDateChange --> NotificationService
+HandleDateChange --> NotificationTimeService
+
+' InitialSetupService --> UserSettingRepository
+' InitialSetupService --> DailyStateRepository
+InitialSetupService --> NotificationService
+InitialSetupService --> NotificationTimeService
+
+' StateJudgeService --> DailyStateRepository
+
+' FeedbackService --> DailyStateRepository
+' FeedbackService --> StateJudgeService
+FeedbackService --> NotificationTimeService
+FeedbackService --> NotificationService
+
+' NotificationTimeService --> NotificationService
+
+NotificationService ..> NotificationScheduler
+
+' データべース関連クラス '
+' class UserSettingRepository {
+' 	+isFirstLaunch(): Future<bool>
+' 	+markFirstLaunchCompleted(): Future<void>
+' 	+saveUserSetting(setting): Future<void>
+' 	+loadUserSetting(): Future<UserSetting?>
+' 	+getLastUsedDate(): Future<DateTime?>
+' 	+setLastUsedDate(date): Future<void>
+' 	+debugPrintUserSetting(): Future<void>
+' }
+
+
+' class DailyStateRepository {
+'     database : Future<Database>
+' 	+getByDate(date): Future<DailyState?>
+' 	+save(state): Future<void>
+' 	+debugPrintAll(): Future<void>
+' }
+
+' class AppDatabase {
+' 	+database: static Future<Database>
+' 	+_initDB(): static Future<Database>
+' }
+
+' UI / Widget クラス '
+' class TutorialPage {
+' 	+(constructor)({onCompleted, initialSetupService})
+' 	+build(context)
+' }
+
+' class _TutorialPageState {
+' 	+initState()
+' 	+build(context)
+' }
+
+' class _FinishPage {
+' 	+build(context)
+' }
+
+' class TimeWheel {
+' 	+build(context)
+' }
+
+' class TimeRangeInput {
+' 	+build(context)
+' }
+
+' class MessagePage {
+' 	+build(context)
+' }
+
+' class FeedbackPage {
+' 	+(constructor)(onFeedbackSubmitted)
+' 	+build(context)
+' }
+
+@enduml

@@ -7,19 +7,19 @@ import '../state/state_judge_service.dart';
 import '../notification_time/notification_time_service.dart';
 
 class FeedbackService {
-  final DailyStateRepository repository;
+  final DailyStateRepository dailyStateRepository;
   final StateJudgeService stateJudgeService;
   final NotificationTimeService notificationTimeService;
 
   FeedbackService(
-    this.repository,
+    this.dailyStateRepository,
     this.stateJudgeService,
     this.notificationTimeService,
   );
 
   Future<void> submitFeedback(FeedbackType type) async {
     debugPrint('[P4] ==== submitFeedback ====');
-    DailyState? today = await repository.getByDate(DateTime.now());
+    DailyState? today = await dailyStateRepository.getByDate(DateTime.now());
 
     // [例外処理]データが存在しない場合はデフォルトの状態を作成（通知時刻は 20:00）
     if (today == null) {
@@ -34,7 +34,7 @@ class FeedbackService {
         feedbackCompleted: false,
         feedbackType: null,
       );
-      await repository.save(defaultToday);
+      await dailyStateRepository.save(defaultToday);
       today = defaultToday;
     }
 
@@ -61,8 +61,8 @@ class FeedbackService {
     debugPrint(
       '[FeedbackService] Feedback submitted: $type, next day notification: $nextTime.notifyTime',
     );
-    await repository.save(updatedToday);
-    await repository.save(nextDayState);
+    await dailyStateRepository.save(updatedToday);
+    await dailyStateRepository.save(nextDayState);
   }
 
   /// FeedBack完了時

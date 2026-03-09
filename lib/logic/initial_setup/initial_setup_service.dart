@@ -15,7 +15,7 @@ class InitialSetupService {
   final dailyStateRepository = DailyStateRepository(AppDatabase.database);
   final NotificationService notificationService;
 
-  Future<void> runInitialSetup() async {
+  Future<void> _runInitialSetup() async {
     await notificationService.init();
     await notificationService.requestPermission();
   }
@@ -33,7 +33,7 @@ class InitialSetupService {
     debugPrint('[P1] === Completing Initial Setup ===');
 
     // 通知許可リクエスト
-    runInitialSetup();
+    _runInitialSetup();
 
     // 現在時刻取得
     final today = DateTime.now();

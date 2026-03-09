@@ -48,6 +48,7 @@ class AppRoot extends StatefulWidget {
   State<AppRoot> createState() => _AppRootState();
 }
 
+// [TODO] app_start_service.dart内に移植
 class EntryService {
   final UserSettingRepository userSettingRepository;
   final AppStartService appStartService;

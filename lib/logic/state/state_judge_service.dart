@@ -5,9 +5,9 @@ import '../../data/repository/daily_state_repository.dart';
 import '../../data/model/app_state.dart';
 
 class StateJudgeService {
-  final DailyStateRepository repository;
+  final DailyStateRepository dailyStateRepository;
 
-  StateJudgeService(this.repository);
+  StateJudgeService(this.dailyStateRepository);
 
   Future<AppState> judgeState() async {
     debugPrint('[P3] ===== judgeState =====');
@@ -15,7 +15,7 @@ class StateJudgeService {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
-    final dailyState = await repository.getByDate(today);
+    final dailyState = await dailyStateRepository.getByDate(today);
 
     debugPrint('[P3] 今の時刻: $now');
     debugPrint('[P3] 通知時刻: ${dailyState?.notifyTime}');

@@ -40,6 +40,7 @@ class AppStartService {
         lastUsed.day != now.day;
   }
 
+  /// [ToDO] 日付変更時の処理自体は別のクラスを作成するなどして分離する
   Future<void> _processDateChange(DateTime now) async {
     debugPrint('[P2] ===== Date Changed Process =====');
     final yesterday = DateTime(
