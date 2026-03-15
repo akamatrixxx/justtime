@@ -1,0 +1,31 @@
+@startuml
+title DFDレベル2（P5_通知時刻算出処理）
+
+left to right direction
+
+database "データストア" as DB
+rectangle P6 as "P6_通知管理処理"
+
+rectangle P5 as "P5_通知時刻算出処理" {
+  rectangle P5_1 as "P5-1_算出条件取得"
+  rectangle P5_2 as "P5-2_調整量決定"
+  rectangle P5_3 as "P5-3_通知時刻算出"
+  rectangle P5_4 as "P5-4_通知時刻保存"
+  rectangle P5_5 as "P5-5_通知設定"
+
+}
+
+' ===== データ取得 =====
+DB --> P5_1 : MD_2:終業時間帯\nMD_3:就寝時間帯\nDD_1:当日通知時刻\nDD_3:FB履歴
+
+' ===== プロセス間連携 =====
+P5_1 --> P5_2 : 設定値・FB内容
+P5_2 --> P5_3 : 調整量
+P5_3 --> P5_4 : 通知時刻
+P5_3 --> P5_5 : 通知時刻
+
+' ===== データ保存 =====
+P5_4 --> DB : DD_1:[翌日]通知時刻更新
+P5_5 --> P6 : 通知時刻
+
+@enduml

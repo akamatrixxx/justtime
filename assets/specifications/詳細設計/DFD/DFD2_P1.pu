@@ -1,0 +1,35 @@
+@startuml
+title DFDレベル2（P1_初回起動／設定処理）
+
+left to right direction
+
+actor ユーザー
+node "モバイルOS\n(通知)" as OS_Notify
+node "モバイルOS\n(時刻)" as OS_Time
+database "データストア" as DB
+
+rectangle P1 as "P1_初回起動／設定処理" {
+
+  rectangle P1_1 as "P1-1_ユーザー設定入力"
+  rectangle P1_2 as "P1-2_通知許可要求"
+  rectangle P1_3 as "P1-3_初期状態データ生成"
+  rectangle P1_4 as "P1-4_初回起動完了処理"
+
+}
+
+' ===== ユーザーとの入出力 =====
+ユーザー --> P1_1 : 終業時間帯\n就寝時間帯
+ユーザー --> P1_2 : 通知許可・不許可選択
+
+' ===== OSとの入出力 =====
+P1_2 --> OS_Notify : 通知許可リクエスト
+OS_Time --> P1_3 : 現在時刻
+
+' ===== プロセス間連携 =====
+P1_1 --> P1_3 : 設定値
+P1_3 --> P1_4 : 初期データ
+
+' ===== データストア =====
+P1_4 --> DB : MD_1:初回起動フラグ(OFF)\nMD_2:終業時間帯\nMD_3:就寝時間帯\nDD_2:FB完了フラグ(false)
+
+@enduml

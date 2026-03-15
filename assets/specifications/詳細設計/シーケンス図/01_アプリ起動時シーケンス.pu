@@ -1,0 +1,60 @@
+@startuml
+title アプリ起動シーケンス（初回判定はEntryService）
+
+actor ユーザー
+participant "Main\n(AppRoot)" as Main
+participant "EntryService" as Entry
+
+participant "AppStartService\n(P2)" as P2
+participant "StateJudgeService\n(P3)" as P3
+participant "UserSettingRepository" as UserRepo
+participant "OS\n(時刻)" as OS_Time
+
+ユーザー -> Main : アプリ起動
+Main -> Entry : onAppStart()
+
+== 初回判定 ==
+
+Entry -> UserRepo : 初回起動フラグ取得
+UserRepo --> Entry : isFirstLaunch
+
+alt 初回起動 == true
+    Entry --> Main : AppState.tutorial
+    note right
+    初回起動シーケンスへ
+    end note
+else 初回起動 == false
+
+    == 日付変更処理 ==
+
+    Entry -> P2 : handleDateChange()
+
+    P2 -> OS_Time : 現在時刻取得
+    OS_Time --> P2 : now
+
+    P2 -> UserRepo : 最終利用日取得
+    UserRepo --> P2 : lastUsed
+
+    P2 -> P2 : 日付変更判定
+
+    alt 日付変更あり
+        P2 -> P2 : DateChangeProcess()
+    end
+
+    P2 -> UserRepo : 最終利用日更新
+    P2 --> Entry : 完了
+
+    == 状態判定 ==
+
+    Entry -> P3 : judgeState()
+
+    P3 -> UserRepo : 今日の通知時刻取得
+    P3 -> UserRepo : FB完了フラグ取得
+    P3 -> OS_Time : 現在時刻取得
+    P3 -> P3 : 状態決定(S1/S2/S3)
+
+    P3 --> Entry : AppState
+    Entry --> Main : AppState
+end
+
+@enduml

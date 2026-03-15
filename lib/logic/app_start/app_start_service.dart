@@ -1,0 +1,114 @@
+import 'package:flutter/material.dart';
+
+import '../../data/model/daily_state.dart';
+import '../../data/repository/user_setting_repository.dart';
+import '../../data/repository/daily_state_repository.dart';
+
+class AppStartService {
+  final UserSettingRepository userSettingRepository;
+  final DailyStateRepository dailyStateRepository;
+
+  AppStartService(this.userSettingRepository, this.dailyStateRepository);
+
+  /// P2: 起動時処理（状態は返さない）
+  Future<void> handleDateChange() async {
+    debugPrint('[P2] ===== handleDateChange =====');
+    final now = DateTime.now();
+
+    final lastUsed = await userSettingRepository.getLastUsedDate();
+
+    if (_isDateChanged(lastUsed, now)) {
+      await _processDateChange(now);
+      debugPrint('Update LastUsedDate: ${now.month}/${now.day}');
+      await userSettingRepository.setLastUsedDate(now);
+    }
+  }
+
+  bool _isDateChanged(DateTime? lastUsed, DateTime now) {
+    if (lastUsed == null) return true;
+    debugPrint(
+      'LastUsedDay: ${lastUsed.month}/${lastUsed.day}, Today: ${now.month}/${now.day}',
+    );
+
+    return lastUsed.year != now.year ||
+        lastUsed.month != now.month ||
+        lastUsed.day != now.day;
+  }
+
+  Future<void> _processDateChange(DateTime now) async {
+    debugPrint('[P2] ===== Date Changed Process =====');
+    final yesterday = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(const Duration(days: 1));
+
+    DailyState newState;
+    final yesterdayState = await dailyStateRepository.getByDate(yesterday);
+    final today = DateTime(now.year, now.month, now.day);
+
+    /// 未利用日がある場合は、最終利用日まで遡ってデータを探索し、
+    /// 見つかったデータと同じ通知時刻で今日の状態を作成する。
+    if (yesterdayState == null) {
+      final lastUsed = await userSettingRepository.getLastUsedDate();
+
+      TimeOfDay lastNotifyTime = const TimeOfDay(
+        hour: 20,
+        minute: 0,
+      ); // デフォルトの通知時刻
+
+      if (lastUsed != null) {
+        // 日付部分だけを比較するために時刻を切り捨て
+        final lastUsedDateOnly = DateTime(
+          lastUsed.year,
+          lastUsed.month,
+          lastUsed.day,
+        );
+
+        DateTime searchDate = yesterday;
+        DailyState? found;
+
+        // yesterday から lastUsedDateOnly まで遡る（lastUsed を含む）
+        while (!searchDate.isBefore(lastUsedDateOnly)) {
+          final s = await dailyStateRepository.getByDate(searchDate);
+          if (s != null) {
+            found = s;
+            break;
+          }
+          searchDate = searchDate.subtract(const Duration(days: 1));
+        }
+
+        if (found != null) {
+          lastNotifyTime = found.notifyTime;
+        }
+      }
+
+      newState = DailyState(
+        date: today,
+        notifyTime: lastNotifyTime,
+        feedbackCompleted: false,
+        feedbackType: null,
+      );
+      await dailyStateRepository.save(newState);
+
+      return;
+    }
+
+    final todayState = await dailyStateRepository.getByDate(today);
+    if (todayState != null && yesterdayState.feedbackCompleted) {
+      /// フィードバック完了 → 通知時刻は作成済みなのでなにもしない
+      debugPrint(
+        'Feedback completed, today state already exists. No action needed.',
+      );
+    } else {
+      /// フィードバック未完了 → 昨日と同じ通知時刻で新しい状態を作成
+      newState = DailyState(
+        date: today,
+        notifyTime: yesterdayState.notifyTime,
+        feedbackCompleted: false,
+        feedbackType: null,
+      );
+      await dailyStateRepository.save(newState);
+    }
+  }
+}

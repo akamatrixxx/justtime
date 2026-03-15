@@ -1,0 +1,47 @@
+@startuml
+title 03_日付変更時 処理フロー（loop構文対応）
+
+start
+
+:日付変更検知;
+note right
+アプリ起動時に
+現在日付と最終利用日を取得
+end note
+
+if (最終利用日 + 1日 < 現在日付?) then (Yes)
+  :未利用日が存在;
+
+  :処理対象日 = 最終利用日 + 1日;
+
+  while (処理対象日 < 現在日付?) is (Yes)
+
+    :処理対象日を未完了として確定;
+    note right
+    ・FB完了 = false
+    end note
+
+    :分析用履歴として保存;
+
+    :最終利用日 = 処理対象日に更新;
+
+    :対象日を1日進める;
+  endwhile (No)
+
+  :通知時刻算出処理;
+
+  :当日通知時刻を保存;
+
+  :当日状態を初期化;
+note right
+・FB完了フラグ = false
+end note
+
+else (No)
+  :未利用日なし;
+endif
+
+
+
+stop
+@enduml

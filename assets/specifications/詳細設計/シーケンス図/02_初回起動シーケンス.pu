@@ -1,0 +1,61 @@
+@startuml
+title 初回起動シーケンス（Entry主導）
+
+actor ユーザー
+participant "TutorialPage\n(UI)" as UI
+participant "Main\n(AppRoot)" as Main
+participant "EntryService" as Entry
+
+participant "InitialSetupService\n(P1)" as P1
+participant "StateJudgeService\n(P3)" as P3
+participant "UserSettingRepository" as UserRepo
+participant "OS\n(通知)" as OS_Notify
+participant "OS\n(時刻)" as OS_Time
+
+Entry --> Main : AppState.tutorial
+Main -> UI : TutorialPage表示
+
+== ユーザー入力 ==
+
+ユーザー -> UI : 終業時間帯入力
+ユーザー -> UI : 就寝時間帯入力
+ユーザー -> UI : 完了ボタン押下
+
+UI -> Main : 完了ボタン押下検知
+Main -> Entry : CompleteTutorial()
+Entry -> P1 : completeInitialSetup()
+
+== 通知許可 ==
+
+P1 -> OS_Notify : 通知許可リクエスト
+OS_Notify --> P1 : 許可 / 不許可
+
+== 初期データ生成 ==
+
+P1 -> OS_Time : 現在時刻取得
+OS_Time --> P1 : now
+
+P1 -> P1 : 初回通知時刻算出
+note right
+終業時間帯の中央値
+end note
+
+P1 -> UserRepo : 初回起動フラグ=false
+P1 -> UserRepo : 終業時間帯保存
+P1 -> UserRepo : 就寝時間帯保存
+P1 -> UserRepo : 当日DailyState生成
+P1 -> UserRepo : FB完了=false
+
+ == 状態判定 ==
+
+Entry -> P3 : judgeState()
+
+P3 -> UserRepo : 今日の通知時刻取得
+P3 -> UserRepo : FB完了フラグ取得
+P3 -> OS_Time : 現在時刻取得
+P3 -> P3 : 状態決定(S1/S2/S3)
+
+P3 --> Entry : AppState
+Entry --> Main : AppState
+
+@enduml
