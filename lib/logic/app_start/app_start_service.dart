@@ -1,14 +1,19 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../data/db/app_database.dart';
 import '../../data/model/daily_state.dart';
 import '../../data/repository/user_setting_repository.dart';
 import '../../data/repository/daily_state_repository.dart';
+import '../state/state_judge_service.dart';
+import '../../data/model/app_state.dart';
+import '../notification_time/notification_time_service.dart';
 
 class AppStartService {
   final UserSettingRepository userSettingRepository;
-  final DailyStateRepository dailyStateRepository;
+  final NotificationTimeService notificationTimeService;
 
-  AppStartService(this.userSettingRepository, this.dailyStateRepository);
+  AppStartService(this.userSettingRepository, this.notificationTimeService);
 
   /// P2: 起動時処理（状態は返さない）
   Future<void> handleDateChange() async {
@@ -35,6 +40,7 @@ class AppStartService {
         lastUsed.day != now.day;
   }
 
+  /// [ToDO] 日付変更時の処理自体は別のクラスを作成するなどして分離する
   Future<void> _processDateChange(DateTime now) async {
     debugPrint('[P2] ===== Date Changed Process =====');
     final yesterday = DateTime(
@@ -43,8 +49,11 @@ class AppStartService {
       now.day,
     ).subtract(const Duration(days: 1));
 
+    // 未利用日判定
+    final DailyStateRepository repository;
     DailyState newState;
-    final yesterdayState = await dailyStateRepository.getByDate(yesterday);
+    repository = DailyStateRepository(AppDatabase.database);
+    final yesterdayState = await repository.getByDate(yesterday);
     final today = DateTime(now.year, now.month, now.day);
 
     /// 未利用日がある場合は、最終利用日まで遡ってデータを探索し、
@@ -70,7 +79,7 @@ class AppStartService {
 
         // yesterday から lastUsedDateOnly まで遡る（lastUsed を含む）
         while (!searchDate.isBefore(lastUsedDateOnly)) {
-          final s = await dailyStateRepository.getByDate(searchDate);
+          final s = await repository.getByDate(searchDate);
           if (s != null) {
             found = s;
             break;
@@ -89,12 +98,17 @@ class AppStartService {
         feedbackCompleted: false,
         feedbackType: null,
       );
-      await dailyStateRepository.save(newState);
+
+      // 通知時刻の設定＆データ保存
+      await notificationTimeService.updateDailyNotification(
+        newState.notifyTime,
+      );
+      await repository.save(newState);
 
       return;
     }
 
-    final todayState = await dailyStateRepository.getByDate(today);
+    final todayState = await repository.getByDate(today);
     if (todayState != null && yesterdayState.feedbackCompleted) {
       /// フィードバック完了 → 通知時刻は作成済みなのでなにもしない
       debugPrint(
@@ -102,13 +116,18 @@ class AppStartService {
       );
     } else {
       /// フィードバック未完了 → 昨日と同じ通知時刻で新しい状態を作成
+      /// [ToDo] フィードバックなしの場合の通知時刻算出処理
       newState = DailyState(
         date: today,
         notifyTime: yesterdayState.notifyTime,
         feedbackCompleted: false,
         feedbackType: null,
       );
-      await dailyStateRepository.save(newState);
+      // 通知時刻の設定＆データ保存
+      await notificationTimeService.updateDailyNotification(
+        newState.notifyTime,
+      );
+      await repository.save(newState);
     }
   }
 }

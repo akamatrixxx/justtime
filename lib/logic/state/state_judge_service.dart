@@ -1,12 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/repository/daily_state_repository.dart';
 import '../../data/model/app_state.dart';
 
 class StateJudgeService {
-  final DailyStateRepository repository;
+  final DailyStateRepository dailyStateRepository;
 
-  StateJudgeService(this.repository);
+  StateJudgeService(this.dailyStateRepository);
 
   Future<AppState> judgeState() async {
     debugPrint('[P3] ===== judgeState =====');
@@ -14,7 +15,7 @@ class StateJudgeService {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
-    final dailyState = await repository.getByDate(today);
+    final dailyState = await dailyStateRepository.getByDate(today);
 
     debugPrint('[P3] 今の時刻: $now');
     debugPrint('[P3] 通知時刻: ${dailyState?.notifyTime}');
@@ -22,6 +23,11 @@ class StateJudgeService {
 
     if (dailyState == null) {
       return AppState.beforeNotification;
+    }
+
+    /// 完了状態：フィードバック完了
+    if (dailyState.feedbackCompleted == true) {
+      return AppState.completed;
     }
 
     /// 通知前：フィードバック未完了かつ通知時刻前
@@ -36,8 +42,9 @@ class StateJudgeService {
       return AppState.waitingFeedback;
     }
 
-    /// 完了状態：フィードバック完了
-    return AppState.completed;
+    /// 例外状態：上記以外の状態（通常は発生しない）
+    debugPrint('[P3][WARN] 例外状態: ${dailyState.toMap()}');
+    return AppState.beforeNotification;
   }
 
   bool _isBeforeNotification(DateTime now, TimeOfDay notifyTime) {

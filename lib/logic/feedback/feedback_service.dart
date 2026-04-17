@@ -2,25 +2,30 @@ import 'package:flutter/material.dart';
 import '../../data/model/daily_state.dart';
 import '../../data/model/feedback.dart';
 import '../../data/model/app_state.dart';
+import '../../data/model/notification_log.dart';
 import '../../data/repository/daily_state_repository.dart';
+import '../../data/repository/notification_log_repository.dart';
 import '../state/state_judge_service.dart';
 import '../notification_time/notification_time_service.dart';
 
 class FeedbackService {
-  final DailyStateRepository repository;
+  final DailyStateRepository dailyStateRepository;
   final StateJudgeService stateJudgeService;
   final NotificationTimeService notificationTimeService;
+  final NotificationLogRepository notificationLogRepository;
 
   FeedbackService(
-    this.repository,
+    this.dailyStateRepository,
     this.stateJudgeService,
     this.notificationTimeService,
+    this.notificationLogRepository,
   );
 
   Future<void> submitFeedback(FeedbackType type) async {
-    DailyState? today = await repository.getByDate(DateTime.now());
+    debugPrint('[P4] ==== submitFeedback ====');
+    DailyState? today = await dailyStateRepository.getByDate(DateTime.now());
 
-    // データが存在しない場合はデフォルトの状態を作成（通知時刻は 20:00）
+    // [例外処理]データが存在しない場合はデフォルトの状態を作成（通知時刻は 20:00）
     if (today == null) {
       debugPrint(
         '[FeedbackService][ASSERT] No DailyState for today, creating default state.',
@@ -33,11 +38,12 @@ class FeedbackService {
         feedbackCompleted: false,
         feedbackType: null,
       );
-      await repository.save(defaultToday);
+      await dailyStateRepository.save(defaultToday);
       today = defaultToday;
     }
 
-    final nextTime = notificationTimeService.calcNextTime(
+    // 次回通知時刻算出
+    final nextTime = await notificationTimeService.calcNextTime(
       currentNotifyTime: today.notifyTime,
       feedbackType: type,
     );
@@ -59,8 +65,18 @@ class FeedbackService {
     debugPrint(
       '[FeedbackService] Feedback submitted: $type, next day notification: $nextTime.notifyTime',
     );
-    await repository.save(updatedToday);
-    await repository.save(nextDayState);
+    await dailyStateRepository.save(updatedToday);
+    await dailyStateRepository.save(nextDayState);
+
+    await notificationLogRepository.insert(
+      NotificationLog(
+        eventType: NotificationEventType.feedbackSubmitted,
+        timestamp: DateTime.now(),
+        notifyTime: today.notifyTime,
+        feedbackType: type,
+        note: 'nextNotify=${nextTime.hour}:${nextTime.minute}',
+      ),
+    );
   }
 
   /// FeedBack完了時

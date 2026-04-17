@@ -1,87 +1,140 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../data/model/feedback.dart';
-import '../../data/repository/user_setting_repository.dart';
-import '../../data/repository/daily_state_repository.dart';
-import '../common/app_drawer.dart';
-import '../theme/app_theme.dart';
 
-class FeedbackPage extends StatelessWidget {
-  final Function(FeedbackType) onFeedbackSubmitted;
-  final UserSettingRepository userSettingRepository;
-  final DailyStateRepository dailyStateRepository;
+class FeedbackPage extends StatefulWidget {
+  final Future<void> Function(FeedbackType) onFeedbackSubmitted;
+  final VoidCallback? onOpenMenu;
 
   const FeedbackPage({
     super.key,
     required this.onFeedbackSubmitted,
-    required this.userSettingRepository,
-    required this.dailyStateRepository,
+    this.onOpenMenu,
   });
 
   @override
+  State<FeedbackPage> createState() => _FeedbackPageState();
+}
+
+class _FeedbackPageState extends State<FeedbackPage> {
+  bool _submitting = false;
+
+  Future<void> _submit(FeedbackType type) async {
+    if (_submitting) return;
+    setState(() => _submitting = true);
+    try {
+      await widget.onFeedbackSubmitted(type);
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(
+        context,
       ),
-      drawer: AppDrawer(
-        userSettingRepository: userSettingRepository,
-        dailyStateRepository: dailyStateRepository,
+      navigationBar: CupertinoNavigationBar(
+        border: null,
+        backgroundColor: CupertinoColors.systemGroupedBackground
+            .resolveFrom(context)
+            .withAlpha(220),
+        leading: widget.onOpenMenu == null
+            ? null
+            : CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: widget.onOpenMenu,
+                child: const Icon(
+                  CupertinoIcons.line_horizontal_3,
+                  size: 26,
+                ),
+              ),
+        middle: const Text(
+          '今日のフィードバック',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
       ),
-      body: SafeArea(
+      child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Spacer(flex: 2),
-              Icon(
-                Icons.chat_bubble_outline,
-                size: 56,
-                color: AppColors.feedback,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                '通知のタイミングは\nいかがでしたか？',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryDark,
-                ),
-                textAlign: TextAlign.center,
-              ),
               const SizedBox(height: 8),
-              Text(
-                'フィードバックに応じて次回の通知時刻を調整します',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[600],
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF4A90E2), Color(0xFF50C9C3)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        child: const Icon(
+                          CupertinoIcons.chat_bubble_2_fill,
+                          color: CupertinoColors.white,
+                          size: 34,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        '通知のタイミングは\nいかがでしたか？',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: CupertinoColors.label.resolveFrom(context),
+                          height: 1.35,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '次回の通知時刻の調整に使います',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: CupertinoColors.secondaryLabel.resolveFrom(
+                            context,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 40),
-              _FeedbackCard(
-                icon: Icons.fast_forward,
-                title: 'まだ早いよ',
-                description: '次回の通知を30分遅くします',
-                color: Colors.orange,
-                onTap: () => onFeedbackSubmitted(FeedbackType.tooEarly),
+              _FeedbackChoice(
+                emoji: '⏰',
+                label: 'まだ早いよ',
+                sub: '次はもう少し遅く',
+                onPressed: _submitting
+                    ? null
+                    : () => _submit(FeedbackType.tooEarly),
               ),
-              const SizedBox(height: 12),
-              _FeedbackCard(
-                icon: Icons.thumb_up_outlined,
-                title: 'ちょうどいい！',
-                description: '通知時刻を変更しません',
-                color: Colors.green,
-                onTap: () => onFeedbackSubmitted(FeedbackType.goodTiming),
+              const SizedBox(height: 10),
+              _FeedbackChoice(
+                emoji: '🙏',
+                label: 'ありがとう',
+                sub: 'ちょうど良いタイミング',
+                primary: true,
+                onPressed: _submitting
+                    ? null
+                    : () => _submit(FeedbackType.goodTiming),
               ),
-              const SizedBox(height: 12),
-              _FeedbackCard(
-                icon: Icons.fast_rewind,
-                title: 'もっと早く！',
-                description: '次回の通知を30分早くします',
-                color: Colors.blue,
-                onTap: () => onFeedbackSubmitted(FeedbackType.tooLate),
+              const SizedBox(height: 10),
+              _FeedbackChoice(
+                emoji: '😮‍💨',
+                label: 'なんでいまさら',
+                sub: '次はもう少し早く',
+                onPressed: _submitting
+                    ? null
+                    : () => _submit(FeedbackType.tooLate),
               ),
-              const Spacer(flex: 3),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -90,64 +143,68 @@ class FeedbackPage extends StatelessWidget {
   }
 }
 
-class _FeedbackCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String description;
-  final MaterialColor color;
-  final VoidCallback onTap;
+class _FeedbackChoice extends StatelessWidget {
+  final String emoji;
+  final String label;
+  final String sub;
+  final VoidCallback? onPressed;
+  final bool primary;
 
-  const _FeedbackCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.color,
-    required this.onTap,
+  const _FeedbackChoice({
+    required this.emoji,
+    required this.label,
+    required this.sub,
+    required this.onPressed,
+    this.primary = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: color[50],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color[700], size: 24),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+    final bg = primary
+        ? CupertinoColors.activeBlue
+        : CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context);
+    final fg = primary
+        ? CupertinoColors.white
+        : CupertinoColors.label.resolveFrom(context);
+    final subColor = primary
+        ? CupertinoColors.white.withAlpha(220)
+        : CupertinoColors.secondaryLabel.resolveFrom(context);
+    return CupertinoButton(
+      padding: EdgeInsets.zero,
+      onPressed: onPressed,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 26)),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: fg,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      description,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[500],
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    sub,
+                    style: TextStyle(fontSize: 12, color: subColor),
+                  ),
+                ],
               ),
-              Icon(Icons.chevron_right, color: Colors.grey[300]),
-            ],
-          ),
+            ),
+            Icon(CupertinoIcons.chevron_right, size: 16, color: fg),
+          ],
         ),
       ),
     );

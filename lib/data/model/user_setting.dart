@@ -21,7 +21,6 @@ class UserSetting {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': 1,
       'is_first_launch': isFirstLaunch ? 1 : 0,
       'last_used_date': lastUsedDate?.toIso8601String().split('T').first,
 

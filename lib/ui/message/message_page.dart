@@ -1,56 +1,92 @@
-import 'package:flutter/material.dart';
-import '../common/app_drawer.dart';
-import '../theme/app_theme.dart';
-import '../../data/model/app_state.dart';
-import '../../data/repository/user_setting_repository.dart';
-import '../../data/repository/daily_state_repository.dart';
+import 'package:flutter/cupertino.dart';
 
 class MessagePage extends StatelessWidget {
-  final AppState appState;
-  final UserSettingRepository userSettingRepository;
-  final DailyStateRepository dailyStateRepository;
+  final String message;
+  final VoidCallback? onOpenMenu;
 
-  const MessagePage({
-    super.key,
-    required this.appState,
-    required this.userSettingRepository,
-    required this.dailyStateRepository,
-  });
+  const MessagePage({super.key, required this.message, this.onOpenMenu});
 
   @override
   Widget build(BuildContext context) {
-    final isWork = appState == AppState.beforeNotification;
-    final gradient = isWork ? AppColors.workGradient : AppColors.restGradient;
-    final message = isWork ? 'まだまだ頑張りましょう！' : '今日もお疲れさまでした';
-
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.systemGroupedBackground.resolveFrom(
+        context,
       ),
-      drawer: AppDrawer(
-        userSettingRepository: userSettingRepository,
-        dailyStateRepository: dailyStateRepository,
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: gradient,
-          ),
+      navigationBar: CupertinoNavigationBar(
+        border: null,
+        backgroundColor: CupertinoColors.systemGroupedBackground
+            .resolveFrom(context)
+            .withAlpha(220),
+        leading: onOpenMenu == null
+            ? null
+            : CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: onOpenMenu,
+                child: const Icon(
+                  CupertinoIcons.line_horizontal_3,
+                  size: 26,
+                ),
+              ),
+        middle: const Text(
+          'justtime',
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
+      ),
+      child: SafeArea(
         child: Center(
-          child: Text(
-            message,
-            style: const TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 28,
+                vertical: 36,
+              ),
+              decoration: BoxDecoration(
+                color: CupertinoColors.secondarySystemGroupedBackground
+                    .resolveFrom(context),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x1A000000),
+                    blurRadius: 20,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF4A90E2), Color(0xFF50C9C3)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.sparkles,
+                      color: CupertinoColors.white,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: CupertinoColors.label.resolveFrom(context),
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            textAlign: TextAlign.center,
           ),
         ),
       ),

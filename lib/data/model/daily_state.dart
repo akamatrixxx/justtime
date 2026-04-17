@@ -20,7 +20,7 @@ class DailyState {
       'notify_hour': notifyTime.hour,
       'notify_minute': notifyTime.minute,
       'feedback_completed': feedbackCompleted ? 1 : 0,
-      'feedback_type': feedbackType?.index,
+      'feedback_type': feedbackType != null ? feedbackType!.index : null,
     };
   }
 
